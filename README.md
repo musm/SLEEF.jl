@@ -2,14 +2,15 @@
 src="https://rawgit.com/musm/Sleef.jl/master/doc/src/assets/logo.svg"
 alt="SLEEF Logo" width="420"></img> </div>
 
+
+A pure Julia port of the [SLEEF math library](https://github.com/shibatch/sleef) (author Naoki Shibata). This port includes a few extras including an `exp10` function and many bug fixes over the original code ([see](https://github.com/JuliaMath/Sleef.jl/issues) for a list of remanining issues that have not been fixed upstream). The library supports `Float32` and `Float64` types.
+
+Based on SLEEF version 2.80 (with additional bugfixes).
+
 [![Travis Build Status](https://travis-ci.org/musm/Sleef.jl.svg?branch=master)](https://travis-ci.org/musm/Sleef.jl)
 [![Appveyor Build Status](https://ci.appveyor.com/api/projects/status/j7lpafn4uf1trlfi/branch/master?svg=true)](https://ci.appveyor.com/project/musm/sleef-jl/branch/master)
 [![Coverage Status](https://coveralls.io/repos/github/musm/Sleef.jl/badge.svg?branch=master)](https://coveralls.io/github/musm/Sleef.jl?branch=master)
 [![codecov.io](http://codecov.io/github/musm/Sleef.jl/coverage.svg?branch=master)](http://codecov.io/github/musm/Sleef.jl?branch=master)
-
-A port of the [SLEEF math library](https://github.com/shibatch/sleef) (author Naoki Shibata) in pure Julia. This port includes a few extras including an `exp10` function and many bug fixes over the original code ([see](https://github.com/JuliaMath/Sleef.jl/issues) for a list of remanining issues that have not been fixed upstream). The library supports `Float32` and `Float64` types.
-
-Based on SLEEF version 2.80 (with additional bugfixes).
 
 # Usage
 
