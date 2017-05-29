@@ -4,8 +4,8 @@
 
 Exponentiation operator, returns `x` raised to the power `y`.
 """
-function pow{T<:IEEEFloat}(x::T, y::T)
-    yi = unsafe_trunc(Int,y)
+function pow(x::T, y::T) where {T <: IEEEFloat}
+    yi = unsafe_trunc(Int, y)
     yint = yi == y
     yodd = isodd(yi) && yint
     z = expk(dmul(logk(abs(x)), y))
@@ -51,19 +51,19 @@ Return `x^{1/3}`.
 """
 function cbrt_fast(d::T) where {T<:IEEEFloat}
     e  = ilogbk(d) + 1
-    d  = ldexpk(d,-e)
+    d  = ldexpk(d, -e)
     r  = (e + 6144) % 3
     q  = r == 1 ? T(M2P13) : T(1)
     q  = r == 2 ? T(M2P23) : q
     q  = ldexpk(q, (e + 6144) ÷ 3 - 2048)
-    q  = flipsign(q,d)
+    q  = flipsign(q, d)
     d  = abs(d)
     x  = cbrt_kernel(d)
-    y  = x*x
-    y  = y*y
-    x -= (d*y - x)*T(1/3)
-    y  = d*x*x
-    y  = (y - T(2/3)*y*(y*x - 1))*q
+    y  = x * x
+    y  = y * y
+    x -= (d * y - x) * T(1 / 3)
+    y  = d * x * x
+    y  = (y - T(2 / 3) * y * (y * x - 1)) * q
 end
 
 
@@ -74,26 +74,26 @@ Return `x^{1/3}`. The prefix operator `∛` is equivalent to `cbrt`.
 """
 function cbrt(d::T) where {T<:IEEEFloat}
     e  = ilogbk(d) + 1
-    d  = ldexpk(d,-e)
+    d  = ldexpk(d, -e)
     r  = (e + 6144) % 3
     q2 = r == 1 ? MD2P13(T) : Double(T(1))
     q2 = r == 2 ? MD2P23(T) : q2
-    q2 = flipsign(q2,d)
+    q2 = flipsign(q2, d)
     d  = abs(d)
     x  = cbrt_kernel(d)
-    y  = x*x
-    y  = y*y
-    x -= (d*y - x)*T(1/3)
+    y  = x * x
+    y  = y * y
+    x -= (d * y - x) * T(1 / 3)
     z  = x
     u  = dsqu(x)
     u  = dsqu(u)
     u  = dmul(u, d)
-    u  = dsub(u,x)
+    u  = dsub(u, x)
     y  = T(u)
-    y  = -T(2/3)*y*z
+    y  = -T(2 / 3) * y * z
     v  = dadd(dsqu(z), y)
-    v  = dmul(v,d)
-    v  = dmul(v,q2)
+    v  = dmul(v, d)
+    v  = dmul(v, q2)
     z  = ldexp(T(v), (e + 6144) ÷ 3 - 2048)
     isinf(d) && (z = flipsign(T(Inf), q2.hi))
     d == 0   && (z = flipsign(T(0), q2.hi))
@@ -108,12 +108,12 @@ end
 
 Compute the hypotenuse `\sqrt{x^2+y^2}` avoiding overflow and underflow.
 """
-function hypot{T<:IEEEFloat}(x::T, y::T)
+function hypot(x::T, y::T) where {T <: IEEEFloat}
     x = abs(x)
     y = abs(y)
     if x < y
        x, y = y, x
     end
-    r = (x == 0) ? y : y/x
-    x*sqrt(T(1) + r*r)
+    r = (x == 0) ? y : y / x
+    x * sqrt(T(1) + r * r)
 end

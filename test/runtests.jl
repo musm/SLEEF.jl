@@ -1,10 +1,10 @@
 using Sleef
 using Base.Test
 
-isnzero{T<:AbstractFloat}(x::T) = signbit(x)
-ispzero{T<:AbstractFloat}(x::T) = !signbit(x)
+isnzero(x::T) where {T <: AbstractFloat} = signbit(x)
+ispzero(x::T) where {T <: AbstractFloat} = !signbit(x)
 
-function cmpdenorm{Tx<:AbstractFloat, Ty<:AbstractFloat}(x::Tx, y::Ty)
+function cmpdenorm(x::Tx, y::Ty) where {Tx <: AbstractFloat, Ty <: AbstractFloat}
     sizeof(Tx) < sizeof(Ty) ? y = Tx(y) : x = Ty(x) # cast larger type to smaller type
     (isnan(x) && isnan(y)) && return true
     (isnan(x) || isnan(y)) && return false
@@ -25,7 +25,7 @@ end
 infh(::Type{Float64}) = 1e+300
 infh(::Type{Float32}) = 1e+37
 function countulp(T, x::AbstractFloat, y::AbstractFloat)
-    X,Y = promote(x,y)
+    X, Y = promote(x, y)
     x, y = T(X), T(Y) # Cast to smaller type
     (isnan(x) && isnan(y)) && return 0
     (isnan(x) || isnan(y)) && return 10000
@@ -40,17 +40,18 @@ function countulp(T, x::AbstractFloat, y::AbstractFloat)
         return 10002
     end
     if isfinite(x) && isfinite(y)
-        return T(abs(X - Y)/eps(y))
+        return T(abs(X - Y) / eps(y))
     end
     return 10003
 end
-countulp{T<:AbstractFloat}(x::T, y::T) = countulp(T,x,y)
+countulp(x::T, y::T) where {T <: AbstractFloat} = countulp(T, x, y)
 
 # get rid off annoying warnings from overwritten function
 macro nowarn(expr)
     quote
         stderr = STDERR
-        stream = open("null", "w")
+        tmp = tempname()
+        stream = open(tmp, "w")
         redirect_stderr(stream)
         result = $(esc(expr))
         redirect_stderr(stderr)
@@ -66,7 +67,7 @@ for f in (:sin, :cos, :tan, :asin, :acos, :atan, :asinh, :acosh, :atanh, :log, :
         import Base.$f
         @nowarn function ($f)(x::BigFloat)
             z = BigFloat()
-            ccall($(string(:mpfr_,f), :libmpfr), Int32, (Ptr{BigFloat}, Ptr{BigFloat}, Int32), &z, &x, ROUNDING_MODE[])
+            ccall($(string(:mpfr_, f), :libmpfr), Int32, (Ptr{BigFloat}, Ptr{BigFloat}, Int32), &z, &x, ROUNDING_MODE[])
             return z
         end
     end
@@ -78,15 +79,15 @@ strip_module_name(f::Function) = last(split(string(f), '.')) # strip module name
 # to test to a reference function
 # xx is an array of values (which may be tuples for multiple arugment functions)
 # tol is the acceptable tolerance to test against
-function test_acc(T, fun_table, xx, tol; debug=false, tol_debug=5)
+function test_acc(T, fun_table, xx, tol; debug = false, tol_debug = 5)
     @testset "accuracy $(strip_module_name(xfun))" for (xfun, fun) in fun_table
         rmax = 0.0
         rmean = 0.0
         xmax = map(zero, first(xx))
         for x in xx
             q = xfun(x...)
-            c = fun(map(BigFloat,x)...)
-            u = countulp(T,q,c)
+            c = fun(map(BigFloat, x)...)
+            u = countulp(T, q, c)
             rmax = max(rmax, u)
             xmax = rmax == u ? x : xmax
             rmean += u
@@ -94,21 +95,21 @@ function test_acc(T, fun_table, xx, tol; debug=false, tol_debug=5)
                 @printf("%s = %.20g\n%s  = %.20g\nx = %.20g\nulp = %g\n", strip_module_name(xfun), q, strip_module_name(fun), T(c), x, ulp(T(c)))
             end
         end
-        rmean = rmean/length(xx)
+        rmean = rmean / length(xx)
 
-        t = @test trunc(rmax,1) <= tol
+        t = @test trunc(rmax, 1) <= tol
 
         fmtxloc = isa(xmax, Tuple) ? string('(', join((@sprintf("%.5f", x) for x in xmax), ", "), ')') : @sprintf("%.5f", xmax)
         println(rpad(strip_module_name(xfun), 18, " "), ": max ", @sprintf("%f", rmax),
-            rpad(" at x = "*fmtxloc, 40, " "),
+            rpad(" at x = " * fmtxloc, 40, " "),
             ": mean ", @sprintf("%f", rmean))
     end
 end
 
 function runtests()
     @testset "Sleef" begin
-        include(joinpath(@__DIR__,"dnml_nan.jl"))
-        include(joinpath(@__DIR__,"accuracy.jl"))
+        include(joinpath(@__DIR__, "dnml_nan.jl"))
+        include(joinpath(@__DIR__, "accuracy.jl"))
     end
 end
 

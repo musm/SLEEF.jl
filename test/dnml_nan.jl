@@ -425,12 +425,12 @@ end
 end
 
 
-@testset "denormal/nonnumber ilog2" begin
-    @test Sleef.ilog2(+T(Inf)) == typemax(Int)
-    @test Sleef.ilog2(-T(Inf)) == typemax(Int)
-    @test Sleef.ilog2(+T(0.0)) == typemin(Int)
-    @test Sleef.ilog2(-T(0.0)) == typemin(Int)
-    @test Sleef.ilog2( T(NaN)) == typemax(Int)
+@testset "denormal/nonnumber ilogb" begin
+    @test Sleef.ilogb(+T(Inf)) == Sleef.INT_MAX
+    @test Sleef.ilogb(-T(Inf)) == Sleef.INT_MAX
+    @test Sleef.ilogb(+T(0.0)) == Sleef.FP_ILOGB0
+    @test Sleef.ilogb(-T(0.0)) == Sleef.FP_ILOGB0
+    @test Sleef.ilogb( T(NaN)) == Sleef.FP_ILOGBNAN
 end
 
 

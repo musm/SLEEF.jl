@@ -130,13 +130,13 @@ global @inline log_fast_kernel(x::Float64) = @horner x c1d c2d c3d c4d c5d c6d c
 global @inline log_fast_kernel(x::Float32) = @horner x c1f c2f c3f c4f c5f
 
 function log_fast(x::T) where {T<:IEEEFloat}
-    e  = ilogbk(T(MSQRT2)*x)
+    e  = ilogbk(T(MSQRT2) * x)
     m  = ldexpk(x, -e)
-    u  = (m-1) / (m+1)
-    u2 = u*u
+    u  = (m - 1) / (m + 1)
+    u2 = u * u
 
     t  = log_fast_kernel(u2)
-    u  = muladd(u, t, T(MLN2)*e)
+    u  = muladd(u, t, T(MLN2) * e)
     isinf(x) && (u = T(Inf))
     x < 0 && (u = T(NaN))
     x == 0 && (u = -T(Inf))
