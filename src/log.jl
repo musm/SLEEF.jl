@@ -1,7 +1,9 @@
 # exported logarithmic functions
-
+const FP_ILOGB0   = typemin(Int)
+const FP_ILOGBNAN = typemin(Int)
+const INT_MAX     = typemax(Int)
 """
-    ilog2(x)
+    ilogb(x)
 
 Returns the integral part of the logarithm of `abs(x)`, using base 2 for the
 logarithm. In other words, this computes the binary exponent of `x` such that
@@ -11,15 +13,15 @@ logarithm. In other words, this computes the binary exponent of `x` such that
 where `significand ∈ [1, 2)`.
 
 * Exceptional cases (where `Int` is the machine wordsize)
-    * `x = 0`    returns `typemin(Int)`
-    * `x = Inf`  returns `typemax(Int)`
-    * `x = NaN`  returns `typemax(Int)`
+    * `x = 0`    returns `FP_ILOGB0`
+    * `x = ±Inf`  returns `INT_MAX`
+    * `x = NaN`  returns `FP_ILOGBNAN`
 """
-function ilog2{T<:IEEEFloat}(x::T)
-    e = ilog2k(abs(x)) - 1
-    isnan(x) && (e = typemax(Int))
-    isinf(x) && (e = typemax(Int))
-    x == 0 && (e = typemin(Int))
+function ilogb(x::T) where {T<:IEEEFloat}
+    e = ilogbk(abs(x))
+    x == 0 && (e = FP_ILOGB0)
+    isnan(x) && (e = FP_ILOGBNAN)
+    isinf(x) && (e = INT_MAX)
     return e
 end
 
@@ -29,7 +31,7 @@ end
 
 Returns the base `10` logarithm of `x`.
 """
-function log10{T<:IEEEFloat}(x::T)
+function log10(x::T) where {T<:IEEEFloat}
     u = T(dmul(logk(x), MDLN10E(T)))
     isinf(x) && (u = T(Inf))
     x < 0  && (u = T(NaN))
@@ -43,7 +45,7 @@ end
 
 Returns the base `2` logarithm of `x`.
 """
-function log2{T<:IEEEFloat}(x::T)
+function log2(x::T) where {T<:IEEEFloat}
     u = T(dmul(logk(x), MDLN2E(T)))
     isinf(x) && (u = T(Inf))
     x < 0  && (u = T(NaN))
@@ -57,12 +59,15 @@ end
 
 Accurately compute the natural logarithm of 1+x.
 """
-function log1p{T<:IEEEFloat}(x::T)
-    u = T(logk2(dadd2(x, T(1))))
+function log1p(x::T) where {T<:IEEEFloat}
+    u = T(logk2(dadd2(x, T(1.0))))
+
     isinf(x) && (u = T(Inf))
     x < -1 && (u = T(NaN))
     x == -1 && (u = -T(Inf))
-    return copysign(u,x) # return correct sign for -0.0
+    isnegzero(x) && (u = T(-0.0))
+
+    return u
 end
 
 
@@ -72,7 +77,7 @@ end
 Compute the natural logarithm of `x`. The inverse of the natural logarithm is
 the natural expoenential function `exp(x)`
 """
-function log{T<:IEEEFloat}(x::T)
+function log(x::T) where {T<:IEEEFloat}
     u = T(logk(x))
     isinf(x) && (u = T(Inf))
     x < 0  && (u = T(NaN))
@@ -84,7 +89,7 @@ end
 # that `d = m \times 2^e`, where `m \in [0.5, 1)` then we apply the polynomial
 # approximant on this reduced argument `m` before putting back the exponent
 # in. This first part is done with the help of the private function
-# `ilog2k(x)` and we put the exponent back using
+# `ilogbk(x)` and we put the exponent back using
 
 #     `\log(m \times 2^e) = \log(m) + \log 2^e =  \log(m) + e\times MLN2
 
@@ -121,15 +126,16 @@ const c3f = 0.400005519390106201171875f0
 const c2f = 0.666666567325592041015625f0
 const c1f = 2f0
 
-global @inline _log_fast(x::Float64) = @horner x c1d c2d c3d c4d c5d c6d c7d c8d
-global @inline _log_fast(x::Float32) = @horner x c1f c2f c3f c4f c5f
+global @inline log_fast_kernel(x::Float64) = @horner x c1d c2d c3d c4d c5d c6d c7d c8d
+global @inline log_fast_kernel(x::Float32) = @horner x c1f c2f c3f c4f c5f
 
-function log_fast{T<:IEEEFloat}(x::T)
-    e  = ilog2k(T(M1SQRT2)*x)
-    m  = ldexpk(x,-e)
-    u  = (m-1)/(m+1)
+function log_fast(x::T) where {T<:IEEEFloat}
+    e  = ilogbk(T(MSQRT2)*x)
+    m  = ldexpk(x, -e)
+    u  = (m-1) / (m+1)
     u2 = u*u
-    t  =_log_fast(u2)
+
+    t  = log_fast_kernel(u2)
     u  = muladd(u, t, T(MLN2)*e)
     isinf(x) && (u = T(Inf))
     x < 0 && (u = T(NaN))

@@ -9,6 +9,11 @@ const FMA_FAST = is_fma_fast(Float64) && is_fma_fast(Float32)
 
 @inline exponent_max{T<:IEEEFloat}(::Type{T}) = Int(exponent_mask(T) >> significand_bits(T))
 
+@inline isnegzero(x::T) where {T<:IEEEFloat} = x === T(-0.0)
+
+@inline ispinf(x::T) where {T<:IEEEFloat} = x ==  T(Inf)
+@inline isninf(x::T) where {T<:IEEEFloat} = x == -T(Inf)
+
 # _sign emits better native code than sign but does not properly handle the Inf/NaN cases
 @inline _sign{T<:IEEEFloat}(d::T) = flipsign(one(T), d)
 
@@ -23,41 +28,4 @@ const FMA_FAST = is_fma_fast(Float64) && is_fma_fast(Float32)
 @inline pow2i{T<:IEEEFloat}(::Type{T}, q::Int) = integer2float(T, q + exponent_bias(T))
 
 # sqrt without the domain checks which we don't need since we handle the checks ourselves
-_sqrt{T<:IEEEFloat}(x::T) = Base.sqrt_llvm_fast(x)
-
-@inline ispinf{T<:IEEEFloat}(x::T) = x ==  T(Inf)
-@inline isninf{T<:IEEEFloat}(x::T) = x == -T(Inf)
-
-# Similar to @horner, but split into even and odd coefficients. This is typically less
-# accurate, but faster due to out of order execution.
-macro horner_split(x,p...)
-    t1 = gensym("x1")
-    t2 = gensym("x2")
-    blk = quote
-        $t1 = $(esc(x))
-        $t2 = $(esc(x)) * $(esc(x))
-    end
-    n = length(p)
-    p0 = esc(p[1])
-    if isodd(n)
-        ex_o = esc(p[end-1])
-        ex_e = esc(p[end])
-        for i = n-3:-2:2
-            ex_o = :(muladd($(t2), $ex_o, $(esc(p[i]))))
-        end
-        for i = n-2:-2:2
-            ex_e = :(muladd($(t2), $ex_e, $(esc(p[i]))))
-        end
-    elseif iseven(n)
-        ex_o = esc(p[end])
-        ex_e = esc(p[end-1])
-        for i = n-2:-2:2
-            ex_o = :(muladd($(t2), $ex_o, $(esc(p[i]))))
-        end
-        for i = n-3:-2:2
-            ex_e = :(muladd($(t2), $ex_e, $(esc(p[i]))))
-        end
-    end
-    push!(blk.args,:($(p0) + $(t1)*$(ex_o) + $(t2)*$(ex_e)))
-    blk
-end
+_sqrt(x::T) where {T<:IEEEFloat} = Base.sqrt_llvm_fast(x)

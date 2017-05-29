@@ -9,8 +9,8 @@ ldexp(x::IEEEFloat, q::Int) = ldexpk(x,q)
 
 
 
-over_e2(::Type{Float64}) = 1024
-over_e2(::Type{Float32}) = 128f0
+const over_e2(::Type{Float64}) = 1024
+const over_e2(::Type{Float32}) = 128f0
 
 """
     exp2(x)
@@ -26,8 +26,8 @@ end
 
 
 
-over_e10(::Type{Float64}) = 308
-over_e10(::Type{Float32}) = 38f0
+const over_e10(::Type{Float64}) = 308
+const over_e10(::Type{Float32}) = 38f0
 
 """
     exp10(x)
@@ -43,20 +43,22 @@ end
 
 
 
-over_em1(::Type{Float64}) = 700.0
-over_em1(::Type{Float32}) = 88f0
-under_em1(::Type{Float64}) = -0.36043653389117156089696070315825181539851971360337e2
-under_em1(::Type{Float32}) = -0.15942385152878742116596338793538061065739925620174f2
+const over_em1(::Type{Float64}) = 700.0
+const over_em1(::Type{Float32}) = 88f0
+
+const under_em1(::Type{Float64}) = -0.36043653389117156089696070315825181539851971360337e2
+const under_em1(::Type{Float32}) = -0.15942385152878742116596338793538061065739925620174f2
 
 """
     expm1(x)
 
 Compute `eˣ- 1` accurately for small values of `x`.
 """
-function expm1{T<:IEEEFloat}(x::T)
-    u = T(dadd2(expk2(Double(x)), -T(1)))
+function expm1(x::T) where {T<:IEEEFloat}
+    u = T(dadd2(expk2(Double(x)), -T(1.0)))
     x > over_em1(T) && (u = T(Inf))
-    x < under_em1(T) && (u = -T(1))
+    x < under_em1(T) && (u = -T(1.0))
+    isnegzero(x) && (u = T(-0.0))
     return u
 end
 

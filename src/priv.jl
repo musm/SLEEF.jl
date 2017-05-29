@@ -49,25 +49,24 @@ end
 
 
 
-# The following define threshold values for `ilog2k`
-threshold_exponent(::Type{Float64}) = 300
-threshold_exponent(::Type{Float32}) = 64
-
+# threshold values for `ilogbk`
+const threshold_exponent(::Type{Float64}) = 300
+const threshold_exponent(::Type{Float32}) = 64
 """
-    ilog2k(x::IEEEFloat) -> Int
+    ilogbk(x::IEEEFloat) -> Int
 
 Returns the integral part of the logarithm of `|x|`, using 2 as base for the logarithm; in other
 words this returns the binary exponent of `x` so that
 
     x = significand × 2^exponent
 
-where `significand ∈ [0.5, 1)`.
+where `significand ∈ [1, 2)`.
 """
-@inline function ilog2k{T<:IEEEFloat}(d::T)
+@inline function ilogbk(d::T) where {T<:IEEEFloat}
     m = d < T(2)^-threshold_exponent(T)
     d = ifelse(m, d*T(2)^threshold_exponent(T), d)
     q = float2integer(d) & exponent_max(T)
-    q = ifelse(m, q - (threshold_exponent(T) + exponent_bias(T) - 1), q - (exponent_bias(T) - 1)) # subtract 1 since we want 2^q
+    q = ifelse(m, q - (threshold_exponent(T) + exponent_bias(T)), q - exponent_bias(T))
 end
 
 
@@ -193,6 +192,9 @@ end
 
 
 let
+global logk
+global logk2
+
 const c8d = 0.134601987501262130076155
 const c7d = 0.132248509032032670243288
 const c6d = 0.153883458318096079652524
@@ -207,25 +209,31 @@ const c3f = 0.285279005765914916992188f0
 const c2f = 0.400005519390106201171875f0
 const c1f = 0.666666567325592041015625f0
 
-global @inline _logk(x::Float64) = @horner x c1d c2d c3d c4d c5d c6d c7d c8d
-global @inline _logk(x::Float32) = @horner x c1f c2f c3f c4f
+global @inline logk_kernel(x::Float64) = @horner x c1d c2d c3d c4d c5d c6d c7d c8d
+global @inline logk_kernel(x::Float32) = @horner x c1f c2f c3f c4f
 
-global @inline function logk{T<:IEEEFloat}(d::T)
-    e  = ilog2k(d*T(M1SQRT2))
+@inline function logk(d::T) where {T<:IEEEFloat}
+    e  = ilogbk(d*T(MSQRT2))
     m  = ldexpk(d,-e)
+
     x  = ddiv(dsub2(m, T(1)), dadd2(T(1), m))
     x2 = dsqu(x)
-    t  =_logk(x2.hi)
+
+    t  = logk_kernel(x2.hi)
+
     dadd(dmul(MDLN2(T), T(e)), dadd(scale(x, T(2)), dmul(dmul(x2, x), t)))
 end
 
 
-global @inline function logk2{T<:IEEEFloat}(d::Double{T})
-    e  = ilog2k(d.hi*T(M1SQRT2))
+@inline function logk2(d::Double{T}) where {T<:IEEEFloat}
+    e  = ilogbk(d.hi*T(MSQRT2))
     m  = scale(d, pow2i(T,-e))
+
     x  = ddiv(dsub2(m, T(1)), dadd2(m, T(1)))
     x2 = dsqu(x)
-    t  =_logk(x2.hi)
+
+    t  = logk_kernel(x2.hi)
+
     dadd(dmul(MDLN2(T), T(e)), dadd(scale(x, T(2)), dmul(dmul(x2, x), t)))
 end
 end

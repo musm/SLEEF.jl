@@ -41,16 +41,16 @@ const c3f =  5.898262500762939453125f0
 const c2f = -3.8095417022705078125f0
 const c1f =  2.2241256237030029296875f0
 
-global @inline _cbrt(x::Float64) = @horner x c1d c2d c3d c4d c5d c6d
-global @inline _cbrt(x::Float32) = @horner x c1f c2f c3f c4f c5f c6f
+global @inline cbrt_kernel(x::Float64) = @horner x c1d c2d c3d c4d c5d c6d
+global @inline cbrt_kernel(x::Float32) = @horner x c1f c2f c3f c4f c5f c6f
 
 """
     cbrt_fast(x)
 
 Return `x^{1/3}`.
 """
-function cbrt_fast{T<:IEEEFloat}(d::T)
-    e  = ilog2k(d)
+function cbrt_fast(d::T) where {T<:IEEEFloat}
+    e  = ilogbk(d) + 1
     d  = ldexpk(d,-e)
     r  = (e + 6144) % 3
     q  = r == 1 ? T(M2P13) : T(1)
@@ -58,7 +58,7 @@ function cbrt_fast{T<:IEEEFloat}(d::T)
     q  = ldexpk(q, (e + 6144) ÷ 3 - 2048)
     q  = flipsign(q,d)
     d  = abs(d)
-    x  =_cbrt(d)
+    x  = cbrt_kernel(d)
     y  = x*x
     y  = y*y
     x -= (d*y - x)*T(1/3)
@@ -72,15 +72,15 @@ end
 
 Return `x^{1/3}`. The prefix operator `∛` is equivalent to `cbrt`.
 """
-function cbrt{T<:IEEEFloat}(d::T)
-    e  = ilog2k(d)
+function cbrt(d::T) where {T<:IEEEFloat}
+    e  = ilogbk(d) + 1
     d  = ldexpk(d,-e)
     r  = (e + 6144) % 3
     q2 = r == 1 ? MD2P13(T) : Double(T(1))
     q2 = r == 2 ? MD2P23(T) : q2
     q2 = flipsign(q2,d)
     d  = abs(d)
-    x  =_cbrt(d)
+    x  = cbrt_kernel(d)
     y  = x*x
     y  = y*y
     x -= (d*y - x)*T(1/3)

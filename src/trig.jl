@@ -32,8 +32,8 @@ const c3f = -0.0001981069071916863322258f0
 const c2f =  0.00833307858556509017944336f0
 const c1f = -0.166666597127914428710938f0
 
-global @inline _sincos(x::Double{Float64}) = dadd(c1d, x.hi*(@horner x.hi c2d c3d c4d c5d c6d c7d c8d))
-global @inline _sincos(x::Double{Float32}) = dadd(c1f, x.hi*(@horner x.hi c2f c3f c4f))
+global @inline sincos_kernel(x::Double{Float64}) = dadd(c1d, x.hi*(@horner x.hi c2d c3d c4d c5d c6d c7d c8d))
+global @inline sincos_kernel(x::Double{Float32}) = dadd(c1f, x.hi*(@horner x.hi c2f c3f c4f))
 
 function sin{T<:IEEEFloat}(x::T)
     d = abs(x)
@@ -44,12 +44,13 @@ function sin{T<:IEEEFloat}(x::T)
     s = dsub2(s, q*PI4D(T)*4)
     t = s
     s = dsqu(s)
-    w =_sincos(s)
+    w =sincos_kernel(s)
     v = dmul(t, dadd(T(1), dmul(w,s)))
     u = T(v)
     qi = unsafe_trunc(Int,q)
     qi & 1 != 0 && (u = -u)
-    return flipsign(u,x)
+    isnegzero(x) && (u = T(-0.0))
+    return u
 end
 
 function cos{T<:IEEEFloat}(x::T)
@@ -61,7 +62,7 @@ function cos{T<:IEEEFloat}(x::T)
     s = dsub2(s, q*PI4D(T)*2)
     t = s
     s = dsqu(s)
-    w =_sincos(s)
+    w =sincos_kernel(s)
     v = dmul(t, dadd(T(1), dmul(w,s)))
     u = T(v)
     qi = unsafe_trunc(Int,q)
@@ -114,21 +115,23 @@ const c1f = -0.166666597127914428710938f0
 # we are now in the negative branch of sin(x). Recall that q is just the integer
 # part of d/π and thus we can determine the correct sign using this information.
 
-global @inline _sincos_fast(x::Float64) = @horner x c1d c2d c3d c4d c5d c6d c7d c8d c9d
-global @inline _sincos_fast(x::Float32) = @horner x c1f c2f c3f c4f c5f
+global @inline sincos_fast_kernel(x::Float64) = @horner x c1d c2d c3d c4d c5d c6d c7d c8d c9d
+global @inline sincos_fast_kernel(x::Float32) = @horner x c1f c2f c3f c4f c5f
 
-function sin_fast{T<:IEEEFloat}(x::T)
+function sin_fast(x::T) where {T<:IEEEFloat}
     d = abs(x)
-    q = roundi(d*T(M1PI))
+    q = round(d*T(M1PI))
     d = muladd(q, -PI4A(T)*4, d)
     d = muladd(q, -PI4B(T)*4, d)
     d = muladd(q, -PI4C(T)*4, d)
     d = muladd(q, -PI4D(T)*4, d)
     s = d*d
-    q & 1 != 0 && (d = -d)
-    u =_sincos_fast(s)
+    qi = unsafe_trunc(Int,q)
+    qi & 1 != 0 && (d = -d)
+    u =sincos_fast_kernel(s)
     u = muladd(s, u*d, d)
-    flipsign(u,x)
+    isnegzero(x) && (u = T(-0.0))
+    return u
 end
 
 function cos_fast{T<:IEEEFloat}(x::T)
@@ -139,7 +142,7 @@ function cos_fast{T<:IEEEFloat}(x::T)
     x = muladd(q, -PI4D(T)*2, x)
     s = x*x
     q & 2 == 0 && (x = -x)
-    u =_sincos_fast(s)
+    u =sincos_fast_kernel(s)
     muladd(s, u*x, x)
 end
 end
@@ -191,10 +194,10 @@ const b3f = -0.00138888787478208541870117f0
 const b2f =  0.0416666641831398010253906f0
 const b1f = -0.5f0
 
-global @inline _sincos_a(x::Float64) = @horner x a1d a2d a3d a4d a5d a6d
-global @inline _sincos_a(x::Float32) = @horner x a1f a2f a3f
-global @inline _sincos_b(x::Float64) = @horner x b1d b2d b3d b4d b5d b6d b7d
-global @inline _sincos_b(x::Float32) = @horner x b1f b2f b3f b4f b5f
+global @inline sincos_a_kernel(x::Float64) = @horner x a1d a2d a3d a4d a5d a6d
+global @inline sincos_a_kernel(x::Float32) = @horner x a1f a2f a3f
+global @inline sincos_b_kernel(x::Float64) = @horner x b1d b2d b3d b4d b5d b6d b7d
+global @inline sincos_b_kernel(x::Float32) = @horner x b1f b2f b3f b4f b5f
 
 function sincos_fast{T<:IEEEFloat}(x::T)
     d  = abs(x)
@@ -204,21 +207,33 @@ function sincos_fast{T<:IEEEFloat}(x::T)
     s  = muladd(q, -PI4B(T)*2, s)
     s  = muladd(q, -PI4C(T)*2, s)
     s  = muladd(q, -PI4D(T)*2, s)
+
     t  = s
+
     s  = s*s
-    u  =_sincos_a(s)
+
+    u  = sincos_a_kernel(s)
     u  = u * s * t
+
     rx = t + u
-    u =_sincos_b(s)
-    ry = u * s + T(1)
+
+    isnegzero(x) && (rx = T(-0.0))
+
+    u = sincos_b_kernel(s)
+
+    ry = u * s + T(1.0)
+
     q & 1 != 0 && (s = ry; ry = rx; rx = s)
     q & 2 != 0 && (rx = -rx)
-    (q+1) & 2 != 0 && (ry = -ry)
+    (q + 1) & 2 != 0 && (ry = -ry)
+
     isinf(d) && (rx = ry = T(NaN))
-    convert(Tuple{T,T}, Double(flipsign(rx,x), ry))
+
+    r = convert(Tuple{T,T}, Double(rx, ry))
+    return r
 end
 
-function sincos{T<:IEEEFloat}(x::T)
+function sincos(x::T) where {T<:IEEEFloat}
     d  = abs(x)
     q  = roundi(d*2*T(M1PI))
     s  = dsub2(d, q*PI4A(T)*2)
@@ -228,18 +243,27 @@ function sincos{T<:IEEEFloat}(x::T)
     t  = s
     s  = dsqu(s)
     sx = T(s)
-    u  =_sincos_a(sx)
+
+    u  = sincos_a_kernel(sx)
     u *= sx * t.hi
+
     v  = dadd(t, u)
     rx = T(v)
-    u  =_sincos_b(sx)
+
+    isnegzero(x) && (rx = T(-0.0))
+
+    u  = sincos_b_kernel(sx)
     v  = dadd(T(1), dmul(sx, u))
     ry = T(v)
+
     q & 1 != 0 && (u = ry; ry = rx; rx = u)
     q & 2 != 0 && (rx = -rx)
-    (q+1) & 2 != 0 && (ry = -ry)
+    (q + 1) & 2 != 0 && (ry = -ry)
+
     isinf(d) && (rx = ry = T(NaN))
-    convert(Tuple{T,T}, Double(flipsign(rx, x), ry))
+
+    r = convert(Tuple{T,T}, Double(rx, ry))
+    return r
 end
 end
 
@@ -286,10 +310,10 @@ const c3f =  0.0540687143802642822265625f0
 const c2f =  0.133325666189193725585938f0
 const c1f =  0.33333361148834228515625f0
 
-global @inline _tan_fast(x::Float64) = @horner_split x c1d c2d c3d c4d c5d c6d c7d c8d c9d c10d c11d c12d c13d c14d c15d
-global @inline _tan_fast(x::Float32) = @horner x c1f c2f c3f c4f c5f c6f c7f
+global @inline tan_fast_kernel(x::Float64) = @horner x c1d c2d c3d c4d c5d c6d c7d c8d c9d c10d c11d c12d c13d c14d c15d
+global @inline tan_fast_kernel(x::Float32) = @horner x c1f c2f c3f c4f c5f c6f c7f
 
-function tan_fast{T<:IEEEFloat}(d::T)
+function tan_fast(d::T) where {T<:IEEEFloat}
     w = abs(d)
     q = roundi(w*T(M2PI))
     x = muladd(q, -PI4A(T)*2, w)
@@ -298,18 +322,23 @@ function tan_fast{T<:IEEEFloat}(d::T)
     x = muladd(q, -PI4D(T)*2, x)
     q & 1 != 0 && (x = -x)
     s = x*x
-    u =_tan_fast(s)
+    u =tan_fast_kernel(s)
     u = muladd(s, u*x, x)
+
     q & 1 != 0 && (u = 1/u)
+
     isinf(w) && (u = T(NaN))
-    return flipsign(u,d)
+
+    isnegzero(d) && (u = T(-0.0))
+
+    return u
 end
 
-global @inline _tan(x::Double{Float64}) = dadd(c1d, x.hi*(@horner_split x.hi c2d c3d c4d c5d c6d c7d c8d c9d c10d c11d c12d c13d c14d c15d))
-global @inline _tan(x::Double{Float32}) = dadd(c1f, dmul(x, @horner x.hi c2f c3f c4f c5f c6f c7f))
-# global @inline _tan(x::Double{Float32}) = dadd(c1f, dmul(x.hi, dadd(c2f, x.hi*(@horner x.hi c3f c4f c5f c6f c7f))))
+global @inline tan_kernel(x::Double{Float64}) = dadd(c1d, x.hi*(@horner x.hi c2d c3d c4d c5d c6d c7d c8d c9d c10d c11d c12d c13d c14d c15d))
+global @inline tan_kernel(x::Double{Float32}) = dadd(c1f, dmul(x, @horner x.hi c2f c3f c4f c5f c6f c7f))
+# global @inline tan_kernel(x::Double{Float32}) = dadd(c1f, dmul(x.hi, dadd(c2f, x.hi*(@horner x.hi c3f c4f c5f c6f c7f))))
 
-function tan{T<:IEEEFloat}(d::T)
+function tan(d::T) where {T<:IEEEFloat}
     w = abs(d)
     q = round(w*T(M2PI))
     x = dsub2(w, q*PI4A(T)*2)
@@ -319,10 +348,18 @@ function tan{T<:IEEEFloat}(d::T)
     qi = unsafe_trunc(Int,q)
     qi & 1 != 0 && (x = -x)
     s = dsqu(x)
-    u =_tan(s)
+
+    u =tan_kernel(s)
+
     u = dmul(x, dadd(T(1), dmul(u, s)))
+
     qi & 1 != 0 && (u = ddrec(u))
-    return flipsign(T(u),d)
+
+    r = T(u)
+    
+    isnegzero(d) && (r = T(-0.0))
+
+    return r
 end
 end
 
@@ -378,12 +415,12 @@ const c3f = -0.142027363181114196777344f0
 const c2f =  0.199926957488059997558594f0
 const c1f = -0.333331018686294555664062f0
 
-global @inline _atan_fast(x::Float64) = @horner_split x c1d c2d c3d c4d c5d c6d c7d c8d c9d c10d c11d c12d c13d c14d c15d c16d c17d c18d c19d
+global @inline _atan_fast(x::Float64) = @horner x c1d c2d c3d c4d c5d c6d c7d c8d c9d c10d c11d c12d c13d c14d c15d c16d c17d c18d c19d
 global @inline _atan_fast(x::Float32) = @horner x c1f c2f c3f c4f c5f c6f c7f c8f
 
 function atan_fast{T<:IEEEFloat}(x::T)
     q = 0
-    if x < 0
+    if signbit(x)
         x = -x
         q = 2
     end
@@ -478,7 +515,7 @@ function acos{T<:IEEEFloat}(x::T)
     d = atan2k(dsqrt(dmul(dadd(T(1), x), dsub(T(1), x))), Double(abs(x)))
     d = flipsign(d,x)
     abs(x) == 1 && (d = Double(T(0)))
-    x < 0 && (d = dadd(MDPI(T), d))
+    signbit(x) && (d = dadd(MDPI(T), d))
     return T(d)
 end
 
@@ -489,5 +526,5 @@ end
 Compute the inverse cosine of `x`, where the output is in radians.
 """
 function acos_fast{T<:IEEEFloat}(x::T)
-    flipsign(atan2k_fast(_sqrt((1+x)*(1-x)), abs(x)), x) + (x < 0 ? T(MPI) : T(0))
+    flipsign(atan2k_fast(_sqrt((1+x)*(1-x)), abs(x)), x) + (signbit(x) ? T(MPI) : T(0))
 end

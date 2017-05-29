@@ -376,7 +376,7 @@ end
 
 
 @testset "denormal/nonnumber expm1" begin
-    xa = T[NaN, Inf, -Inf]
+    xa = T[NaN, Inf, -Inf, 0.0, -0.0]
     for x in xa
         @test cmpdenorm(Sleef.expm1(x), Base.expm1(BigFloat(x)))
     end
