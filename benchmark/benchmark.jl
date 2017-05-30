@@ -1,23 +1,21 @@
-using Libm
+using Sleef
 using BenchmarkTools
 using JLD, DataStructures
 
-RETUNE  = false
-VERBOSE = true
-DETAILS = false
-
-test_types = (Float64, Float32) # Which types do you want to bench?
-
-const bench = ("Base","Libm")
+const RETUNE  = false
+const VERBOSE = true
+const DETAILS = false
+const test_types = (Float64, Float32) # Which types do you want to bench?
+const bench = ("Base", "Sleef")
 const suite = BenchmarkGroup()
 for n in bench
     suite[n] = BenchmarkGroup([n])
 end
 
-
 bench_reduce(f::Function, X) = mapreduce(x -> reinterpret(Unsigned,x), |, f(x) for x in X)
 
-typealias IEEEFloat Union{Float32,Float64}
+using Base.Math.IEEEFloat
+
 MRANGE(::Type{Float64}) = 10000000
 MRANGE(::Type{Float32}) = 10000
 IntF(::Type{Float64}) = Int64
@@ -59,8 +57,8 @@ end
 import Base.atanh
 for f in (:atanh,)
     @eval begin
-        ($f)(x::Float64) = ccall(($(string(f)),Base.libm_name), Float64, (Float64,), x)
-        ($f)(x::Float32) = ccall(($(string(f,"f")),Base.libm_name), Float32, (Float32,), x)
+        ($f)(x::Float64) = ccall($(string(f)), Float64, (Float64,), x)
+        ($f)(x::Float32) = ccall($(string(f,"f")), Float32, (Float32,), x)
     end
 end
 
@@ -88,7 +86,7 @@ const micros = OrderedDict(
     "cbrt"  => x_cbrt
     )
 
-for n in ("Base","Libm")
+for n in bench
     for (f,x) in micros
         suite[n][f] = BenchmarkGroup([f])
         for T in test_types
@@ -99,7 +97,7 @@ for n in ("Base","Libm")
 end
 
 
-tune_params = joinpath(dirname(@__FILE__), "params.jld")
+tune_params = joinpath(@__DIR__, "params.jld")
 if !isfile(tune_params) || RETUNE
     tune!(suite; verbose=VERBOSE, seconds = 2)
     save(tune_params, "suite", params(suite))
@@ -112,18 +110,18 @@ end
 println("Running micro benchmarks...")
 results = run(suite; verbose=VERBOSE, seconds = 2)
 
-print_with_color(:blue, "Benchmarks: median ratio Libm/Base\n")
+print_with_color(:blue, "Benchmarks: median ratio Sleef/Base\n")
 for f in keys(micros)
     print_with_color(:magenta, string(f))
     for T in test_types
         println()
         print("time: ", )
-        tratio = ratio(median(results["Libm"][f][string(T)]), median(results["Base"][f][string(T)])).time
+        tratio = ratio(median(results["Sleef"][f][string(T)]), median(results["Base"][f][string(T)])).time
         tcolor = tratio > 3 ? :red : tratio < 1.5 ? :green : :blue
         print_with_color(tcolor, @sprintf("%.2f",tratio), " ", string(T))
         if DETAILS
-            print_with_color(:blue, "details Libm/Base\n")
-            println(results["Libm"][f][string(T)])
+            print_with_color(:blue, "details Sleef/Base\n")
+            println(results["Sleef"][f][string(T)])
             println(results["Base"][f][string(T)])
             println()
         end

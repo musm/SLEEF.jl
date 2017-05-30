@@ -201,25 +201,25 @@ let
 global logk
 global logk2
 
-const c8d = 0.134601987501262130076155
-const c7d = 0.132248509032032670243288
-const c6d = 0.153883458318096079652524
-const c5d = 0.181817427573705403298686
-const c4d = 0.222222231326187414840781
-const c3d = 0.285714285651261412873718
-const c2d = 0.400000000000222439910458
-const c1d = 0.666666666666666371239645
+const c8d = 0.13860436390467167910856
+const c7d = 0.131699838841615374240845
+const c6d = 0.153914168346271945653214
+const c5d = 0.181816523941564611721589
+const c4d = 0.22222224632662035403996
+const c3d = 0.285714285511134091777308
+const c2d = 0.400000000000914013309483
+const c1d = 0.666666666666664853302393
 
-const c4f = 0.2371599674224853515625f0
-const c3f = 0.285279005765914916992188f0
-const c2f = 0.400005519390106201171875f0
-const c1f = 0.666666567325592041015625f0
+const c4f = 0.2392828464508056640625f0
+const c3f = 0.28518211841583251953125f0
+const c2f = 0.400005877017974853515625f0
+const c1f = 0.666666686534881591796875f0
 
 global @inline logk_kernel(x::Float64) = @horner x c1d c2d c3d c4d c5d c6d c7d c8d
 global @inline logk_kernel(x::Float32) = @horner x c1f c2f c3f c4f
 
 @inline function logk(d::T) where {T<:IEEEFloat}
-    e  = ilogbk(d * T(MSQRT2))
+    e  = ilogbk(d * T(1.0/0.75))
     m  = ldexpk(d, -e)
 
     x  = ddiv(dsub2(m, T(1)), dadd2(T(1), m))
@@ -232,7 +232,7 @@ end
 
 
 @inline function logk2(d::Double{T}) where {T<:IEEEFloat}
-    e  = ilogbk(d.hi * T(MSQRT2))
+    e  = ilogbk(d.hi * T(1.0/0.75))
     m  = scale(d, pow2i(T, -e))
 
     x  = ddiv(dsub2(m, T(1)), dadd2(m, T(1)))

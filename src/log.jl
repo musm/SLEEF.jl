@@ -111,32 +111,33 @@ function log_fast end
 let
 global log_fast
 
-const c8d = 0.148197055177935105296783
-const c7d = 0.153108178020442575739679
-const c6d = 0.181837339521549679055568
-const c5d = 0.22222194152736701733275
-const c4d = 0.285714288030134544449368
-const c3d = 0.399999999989941956712869
-const c2d = 0.666666666666685503450651
+const c8d = 0.153487338491425068243146
+const c7d = 0.152519917006351951593857
+const c6d = 0.181863266251982985677316
+const c5d = 0.222221366518767365905163
+const c4d = 0.285714294746548025383248
+const c3d = 0.399999999950799600689777
+const c2d = 0.6666666666667778740063
 const c1d = 2.0
 
-const c5f = 0.2371599674224853515625f0
-const c4f = 0.285279005765914916992188f0
-const c3f = 0.400005519390106201171875f0
-const c2f = 0.666666567325592041015625f0
+const c5f = 0.2392828464508056640625f0
+const c4f = 0.28518211841583251953125f0
+const c3f = 0.400005877017974853515625f0
+const c2f = 0.666666686534881591796875f0
 const c1f = 2f0
 
 global @inline log_fast_kernel(x::Float64) = @horner x c1d c2d c3d c4d c5d c6d c7d c8d
 global @inline log_fast_kernel(x::Float32) = @horner x c1f c2f c3f c4f c5f
 
 function log_fast(x::T) where {T<:IEEEFloat}
-    e  = ilogbk(T(MSQRT2) * x)
+    e  = ilogbk(T(1.0/0.75) * x)
     m  = ldexpk(x, -e)
     u  = (m - 1) / (m + 1)
     u2 = u * u
 
     t  = log_fast_kernel(u2)
     u  = muladd(u, t, T(MLN2) * e)
+    
     isinf(x) && (u = T(Inf))
     x < 0 && (u = T(NaN))
     x == 0 && (u = -T(Inf))
