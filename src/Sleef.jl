@@ -80,6 +80,7 @@ include("hyp.jl")    # hyperbolic and inverse hyperbolic functions
 include("misc.jl")   # miscallenous math functions including pow and cbrt
 
 # fallback definitions
+
 for func in (:sin, :cos, :tan, :asin, :acos, :atan, :sinh, :cosh, :tanh,
              :asinh, :acosh, :atanh, :log, :log2, :log10, :log1p, :exp, :exp2, :exp10, :expm1, :cbrt,
              :sin_fast, :cos_fast, :tan_fast, :sincos_fast, :asin_fast, :acos_fast, :atan_fast, :atan2_fast, :log_fast, :cbrt_fast)
