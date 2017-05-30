@@ -1,6 +1,8 @@
 using Sleef
 using Base.Test
 
+using Base.Math.significand_bits
+
 isnzero(x::T) where {T <: AbstractFloat} = signbit(x)
 ispzero(x::T) where {T <: AbstractFloat} = !signbit(x)
 
@@ -22,28 +24,39 @@ end
 
 # the following compares the ulp between x and y.
 # First it promotes them to the larger of the two types x,y
-infh(::Type{Float64}) = 1e+300
-infh(::Type{Float32}) = 1e+37
+const infh(::Type{Float64}) = 1e300
+const infh(::Type{Float32}) = 1e37
 function countulp(T, x::AbstractFloat, y::AbstractFloat)
     X, Y = promote(x, y)
     x, y = T(X), T(Y) # Cast to smaller type
     (isnan(x) && isnan(y)) && return 0
     (isnan(x) || isnan(y)) && return 10000
     if isinf(x)
-        (sign(x) == sign(y) && abs(y) > infh(T)) && return 0 # Relaxed infinity handling
+        (sign(x) == sign(y) && abs(y) > infh(T)) && return 0 # relaxed infinity handling
         return 10001
     end
     (x ==  Inf && y ==  Inf) && return 0
     (x == -Inf && y == -Inf) && return 0
     if y == 0
-        (x == 0) && return 0
+        x == 0 && return 0
         return 10002
     end
     if isfinite(x) && isfinite(y)
-        return T(abs(X - Y) / eps(y))
+        return T(abs(X - Y) / ulp(y))
     end
     return 10003
 end
+
+const DENORMAL_MIN(::Type{Float64}) = 2.0^-1074 
+const DENORMAL_MIN(::Type{Float32}) = 2f0^-149
+
+function ulp(x::T) where {T<:AbstractFloat}
+    x = abs(x)
+    x == T(0.0) && return DENORMAL_MIN(T)
+    val, e = frexp(x)
+    return max(ldexp(T(1.0), e - significand_bits(T) - 1), DENORMAL_MIN(T))
+end
+
 countulp(x::T, y::T) where {T <: AbstractFloat} = countulp(T, x, y)
 
 # get rid off annoying warnings from overwritten function
@@ -108,8 +121,8 @@ end
 
 function runtests()
     @testset "Sleef" begin
-        include(joinpath(@__DIR__, "dnml_nan.jl"))
-        include(joinpath(@__DIR__, "accuracy.jl"))
+        include("exceptional.jl")
+        include("accuracy.jl")
     end
 end
 

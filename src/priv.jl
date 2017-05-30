@@ -31,7 +31,7 @@ end
 
 Computes `a × 2^n`.
 """
-@inline function ldexpk(x::T, q::Int) where {T <: IEEEFloat}
+@inline function ldexpk(x::T, q::Int) where {T<:IEEEFloat}
     bias = exponent_bias(T)
     emax = exponent_max(T)
     m, q = split_exponent(T, q)
@@ -45,7 +45,7 @@ Computes `a × 2^n`.
     x * u
 end
 
-@inline ldexpk2(x::T, e::Int) where {T <: IEEEFloat} = x * pow2i(T, e >> UInt(1)) * pow2i(T, e - (e >> UInt(1)))
+@inline ldexpk2(x::T, e::Int) where {T<:IEEEFloat} = x * pow2i(T, e >> UInt(1)) * pow2i(T, e - (e >> UInt(1)))
 
 
 
@@ -108,7 +108,7 @@ const c1f = -0.333332866430282592773438f0
 global @inline atan2k_fast_kernel(x::Float64) = @horner x c1d c2d c3d c4d c5d c6d c7d c8d c9d c10d c11d c12d c13d c14d c15d c16d c17d c18d c19d c20d
 global @inline atan2k_fast_kernel(x::Float32) = @horner x c1f c2f c3f c4f c5f c6f c7f c8f c9f
 
-@inline function atan2k_fast(y::T, x::T) where {T <: IEEEFloat}
+@inline function atan2k_fast(y::T, x::T) where {T<:IEEEFloat}
     q = 0
     if x < 0
         x = -x
@@ -130,7 +130,7 @@ end
 global @inline atan2k_kernel(x::Double{Float64}) = @horner x.hi c1d c2d c3d c4d c5d c6d c7d c8d c9d c10d c11d c12d c13d c14d c15d c16d c17d c18d c19d c20d
 global @inline atan2k_kernel(x::Double{Float32}) = dadd(c1f, x.hi * (@horner x.hi c2f c3f c4f c5f c6f c7f c8f c9f))
 
-@inline function atan2k(y::Double{T}, x::Double{T}) where {T <: IEEEFloat}
+@inline function atan2k(y::Double{T}, x::Double{T}) where {T<:IEEEFloat}
     q = 0
     if x < 0
         x = -x
@@ -174,7 +174,7 @@ const c1f = 0.499999850988388061523438f0
 global @inline expk_kernel(x::Float64) = @horner x c1d c2d c3d c4d c5d c6d c7d c8d c9d c10d
 global @inline expk_kernel(x::Float32) = @horner x c1f c2f c3f c4f c5f
 
-@inline function expk(d::Double{T}) where {T <: IEEEFloat}
+@inline function expk(d::Double{T}) where {T<:IEEEFloat}
     q = round(T(d) * T(MLN2E))
     s = dadd(d, -q * LN2U(T))
     s = dadd(s, -q * LN2L(T))
@@ -185,7 +185,7 @@ global @inline expk_kernel(x::Float32) = @horner x c1f c2f c3f c4f c5f
 end
 
 
-@inline function expk2(d::Double{T}) where {T <: IEEEFloat}
+@inline function expk2(d::Double{T}) where {T<:IEEEFloat}
     q = round(T(d) * T(MLN2E))
     s = dadd(d, -q * LN2U(T))
     s = dadd(s, -q * LN2L(T))

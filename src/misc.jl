@@ -4,7 +4,7 @@
 
 Exponentiation operator, returns `x` raised to the power `y`.
 """
-function pow(x::T, y::T) where {T <: IEEEFloat}
+function pow(x::T, y::T) where {T<:IEEEFloat}
     yi = unsafe_trunc(Int, y)
     yint = yi == y
     yodd = isodd(yi) && yint
@@ -108,7 +108,7 @@ end
 
 Compute the hypotenuse `\sqrt{x^2+y^2}` avoiding overflow and underflow.
 """
-function hypot(x::T, y::T) where {T <: IEEEFloat}
+function hypot(x::T, y::T) where {T<:IEEEFloat}
     x = abs(x)
     y = abs(y)
     if x < y

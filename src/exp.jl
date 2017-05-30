@@ -17,7 +17,7 @@ const over_e2(::Type{Float32}) = 128f0
 
 Compute the base-`2` exponential of `x`, that is `2ˣ`.
 """
-function exp2(x::T) where {T <: IEEEFloat}
+function exp2(x::T) where {T<:IEEEFloat}
     u = expk(dmul(MDLN2(T), x))
     x > over_e2(T) && (u = T(Inf))
     isninf(x) && (u = T(0))
@@ -34,7 +34,7 @@ const over_e10(::Type{Float32}) = 38f0
 
 Compute the base-`10` exponential of `x`, that is `10ˣ`.
 """
-function exp10(x::T) where {T <: IEEEFloat}
+function exp10(x::T) where {T<:IEEEFloat}
     u = expk(dmul(MDLN10(T), x))
     x > over_e10(T) && (u = T(Inf))
     isninf(x) && (u = T(0))
@@ -95,7 +95,7 @@ const c1f = 0.499999850988388061523438f0
 global @inline exp_kernel(x::Float64) = @horner x c1d c2d c3d c4d c5d c6d c7d c8d c9d c10d c11d  
 global @inline exp_kernel(x::Float32) = @horner x c1f c2f c3f c4f c5f
 
-function exp(x::T) where {T <: IEEEFloat}
+function exp(x::T) where {T<:IEEEFloat}
     q = roundi(T(MLN2E) * x)
     s = muladd(q, -LN2U(T), x)
     s = muladd(q, -LN2L(T), s)

@@ -35,7 +35,7 @@ const c1f = -0.166666597127914428710938f0
 global @inline sincos_kernel(x::Double{Float64}) = dadd(c1d, x.hi * (@horner x.hi c2d c3d c4d c5d c6d c7d c8d))
 global @inline sincos_kernel(x::Double{Float32}) = dadd(c1f, x.hi * (@horner x.hi c2f c3f c4f))
 
-function sin(x::T) where {T <: IEEEFloat}
+function sin(x::T) where {T<:IEEEFloat}
     q = round(x * T(M1PI))
 
     s = dsub2(x, q * PI4A(T) * 4)
@@ -53,7 +53,7 @@ function sin(x::T) where {T <: IEEEFloat}
     return u
 end
 
-function cos(x::T) where {T <: IEEEFloat}
+function cos(x::T) where {T<:IEEEFloat}
     x = abs(x)
     q = muladd(T(2), round(x * T(M1PI) - T(0.5)), T(1))
     s = dsub2(x, q * PI4A(T) * 2)
@@ -133,7 +133,7 @@ function sin_fast(x::T) where {T<:IEEEFloat}
     return u
 end
 
-function cos_fast(x::T) where {T <: IEEEFloat}
+function cos_fast(x::T) where {T<:IEEEFloat}
     q = muladd(2, roundi(x * T(M1PI) - T(0.5)), 1)
     x = muladd(q, -PI4A(T) * 2, x)
     x = muladd(q, -PI4B(T) * 2, x)
@@ -198,7 +198,7 @@ global @inline sincos_a_kernel(x::Float32) = @horner x a1f a2f a3f
 global @inline sincos_b_kernel(x::Float64) = @horner x b1d b2d b3d b4d b5d b6d b7d
 global @inline sincos_b_kernel(x::Float32) = @horner x b1f b2f b3f b4f b5f
 
-function sincos_fast(d::T) where {T <: IEEEFloat}
+function sincos_fast(d::T) where {T<:IEEEFloat}
     q  = roundi(d * T(M2PI))
     s  = d
     s  = muladd(q, -PI4A(T) * 2, s)
@@ -373,7 +373,7 @@ end
 
 Compute the inverse tangent of `x`, where the output is in radians.
 """
-function atan(x::T) where {T <: IEEEFloat}
+function atan(x::T) where {T<:IEEEFloat}
     u = T(atan2k(Double(abs(x)), Double(T(1))))
     isinf(x) && (u = T(MPI2))
     flipsign(u, x)
@@ -421,7 +421,7 @@ const c1f = -0.333331018686294555664062f0
 global @inline _atan_fast(x::Float64) = @horner x c1d c2d c3d c4d c5d c6d c7d c8d c9d c10d c11d c12d c13d c14d c15d c16d c17d c18d c19d
 global @inline _atan_fast(x::Float32) = @horner x c1f c2f c3f c4f c5f c6f c7f c8f
 
-function atan_fast(x::T) where {T <: IEEEFloat}
+function atan_fast(x::T) where {T<:IEEEFloat}
     q = 0
     if signbit(x)
         x = -x
@@ -447,7 +447,7 @@ end
 
 Compute the inverse tangent of `x/y`, using the signs of both `x` and `y` to determine the quadrant of the return value.
 """
-function atan2(x::T, y::T) where {T <: IEEEFloat}
+function atan2(x::T, y::T) where {T<:IEEEFloat}
     r = T(atan2k(Double(abs(x)), Double(y)))
     r = flipsign(r, y)
     if isinf(y) || y == 0
@@ -468,7 +468,7 @@ end
 
 Compute the inverse tangent of `x/y`, using the signs of both `x` and `y` to determine the quadrant of the return value.
 """
-function atan2_fast(x::T, y::T) where {T <: IEEEFloat}
+function atan2_fast(x::T, y::T) where {T<:IEEEFloat}
     r = atan2k_fast(abs(x), y)
     r = flipsign(r, y)
     if isinf(y) || y == 0
@@ -490,7 +490,7 @@ end
 
 Compute the inverse sine of `x`, where the output is in radians.
 """
-function asin(x::T) where {T <: IEEEFloat}
+function asin(x::T) where {T<:IEEEFloat}
     d = atan2k(Double(abs(x)), dsqrt(dmul(dadd(T(1), x), dsub(T(1), x))))
     u = T(d)
     abs(x) == 1 && (u = T(MPI2))
@@ -503,7 +503,7 @@ end
 
 Compute the inverse sine of `x`, where the output is in radians.
 """
-function asin_fast(x::T) where {T <: IEEEFloat}
+function asin_fast(x::T) where {T<:IEEEFloat}
     flipsign(atan2k_fast(abs(x), _sqrt((1 + x) * (1 - x))), x)
 end
 
@@ -514,7 +514,7 @@ end
 
 Compute the inverse cosine of `x`, where the output is in radians.
 """
-function acos(x::T) where {T <: IEEEFloat}
+function acos(x::T) where {T<:IEEEFloat}
     d = atan2k(dsqrt(dmul(dadd(T(1), x), dsub(T(1), x))), Double(abs(x)))
     d = flipsign(d, x)
     abs(x) == 1 && (d = Double(T(0)))
@@ -528,6 +528,6 @@ end
 
 Compute the inverse cosine of `x`, where the output is in radians.
 """
-function acos_fast(x::T) where {T <: IEEEFloat}
+function acos_fast(x::T) where {T<:IEEEFloat}
     flipsign(atan2k_fast(_sqrt((1 + x) * (1 - x)), abs(x)), x) + (signbit(x) ? T(MPI) : T(0))
 end

@@ -1,6 +1,6 @@
-@testset "denormal/nonnumber $T" for T in (Float32, Float64)
+@testset "exceptional $T" for T in (Float32, Float64)
 
-@testset "denormal/nonnumber $xatan2" for xatan2 in (Sleef.atan2_fast, Sleef.atan2)
+@testset "exceptional $xatan2" for xatan2 in (Sleef.atan2_fast, Sleef.atan2)
 
     @test xatan2(T(0.0),  T(-0.0)) === T(pi)
     @test xatan2(T(-0.0), T(-0.0)) === -T(pi)
@@ -84,7 +84,7 @@
 end # denormal/nonumber atan2
 
 
-@testset "denormal/nonnumber xpow" begin
+@testset "exceptional xpow" begin
 
     @test Sleef.pow(T(1), T(NaN))   === T(1)
     @test Sleef.pow( T(NaN), T(0))  === T(1)
@@ -235,7 +235,7 @@ end # denormal/nonumber pow
 
 
 fun_table = Dict(Sleef.sin_fast => Base.sin, Sleef.sin => Base.sin)
-@testset "denormal/nonnumber $xtrig" for (xtrig, trig) in fun_table
+@testset "exceptional $xtrig" for (xtrig, trig) in fun_table
     xa = T[NaN, -0.0, 0.0, Inf, -Inf]
     for x in xa
         @test cmpdenorm(xtrig(x), trig(BigFloat(x)))
@@ -244,7 +244,7 @@ end
 
 
 fun_table = Dict(Sleef.cos_fast => Base.cos, Sleef.cos => Base.cos)
-@testset "denormal/nonnumber $xtrig" for (xtrig, trig) in fun_table
+@testset "exceptional $xtrig" for (xtrig, trig) in fun_table
     xa = T[NaN, -0.0, 0.0, Inf, -Inf]
     for x in xa
         @test cmpdenorm(xtrig(x), trig(BigFloat(x)))
@@ -252,7 +252,7 @@ fun_table = Dict(Sleef.cos_fast => Base.cos, Sleef.cos => Base.cos)
 end
 
 
-@testset "denormal/nonnumber sin in $xsincos"for xsincos in (Sleef.sincos_fast, Sleef.sincos)
+@testset "exceptional sin in $xsincos"for xsincos in (Sleef.sincos_fast, Sleef.sincos)
     xa = T[NaN, -0.0, 0.0, Inf, -Inf]
     for x in xa
         q = xsincos(x)[1]
@@ -261,7 +261,7 @@ end
 end
 
 
-@testset "denormal/nonnumber cos in $xsincos"for xsincos in (Sleef.sincos_fast, Sleef.sincos)
+@testset "exceptional cos in $xsincos"for xsincos in (Sleef.sincos_fast, Sleef.sincos)
     xa = T[NaN, -0.0, 0.0, Inf, -Inf]
     for x in xa
         q = xsincos(x)[2]
@@ -270,7 +270,7 @@ end
 end
 
 
-@testset "denormal/nonnumber $xtan" for xtan in (Sleef.tan_fast, Sleef.tan)
+@testset "exceptional $xtan" for xtan in (Sleef.tan_fast, Sleef.tan)
     xa = T[NaN, Inf, -Inf, -0.0, 0.0, pi/2, -pi/2, -0.0, 0.0]
     for x in xa
         @test cmpdenorm(xtan(x), Base.tan(BigFloat(x)))
@@ -279,7 +279,7 @@ end
 
 
 fun_table = Dict(Sleef.asin => Base.asin, Sleef.asin_fast => Base.asin, Sleef.acos => Base.acos, Sleef.acos_fast => Base.acos)
-@testset "denormal/nonnumber $xatrig" for (xatrig, atrig) in fun_table
+@testset "exceptional $xatrig" for (xatrig, atrig) in fun_table
     xa = T[NaN, Inf, -Inf, 2, -2, 1, -1, -0.0, 0.0]
     for x in xa
         @test cmpdenorm(xatrig(x), atrig(BigFloat(x)))
@@ -287,7 +287,7 @@ fun_table = Dict(Sleef.asin => Base.asin, Sleef.asin_fast => Base.asin, Sleef.ac
 end
 
 
-@testset "denormal/nonnumber $xatan" for xatan in (Sleef.atan, Sleef.atan_fast)
+@testset "exceptional $xatan" for xatan in (Sleef.atan, Sleef.atan_fast)
     xa = T[NaN, Inf, -Inf, -0.0, 0.0]
     for x in xa
         @test cmpdenorm(xatan(x), Base.atan(BigFloat(x)))
@@ -295,7 +295,7 @@ end
 end
 
 
-@testset "denormal/nonnumber exp" begin
+@testset "exceptional exp" begin
     xa = T[NaN, Inf, -Inf, 10000, -10000]
     for x in xa
         @test cmpdenorm(Sleef.exp(x), Base.exp(BigFloat(x)))
@@ -303,7 +303,7 @@ end
 end
 
 
-@testset "denormal/nonnumber sinh" begin
+@testset "exceptional sinh" begin
     xa = T[NaN, 0.0, -0.0, Inf, -Inf, 10000, -10000]
     for x in xa
         @test cmpdenorm(Sleef.sinh(x), Base.sinh(BigFloat(x)))
@@ -311,7 +311,7 @@ end
 end
 
 
-@testset "denormal/nonnumber cosh" begin
+@testset "exceptional cosh" begin
     xa = T[NaN, 0.0, -0.0, Inf, -Inf, 10000, -10000]
     for x in xa
         @test cmpdenorm(Sleef.cosh(x),  Base.cosh(BigFloat(x)))
@@ -319,7 +319,7 @@ end
 end
 
 
-@testset "denormal/nonnumber tanh" begin
+@testset "exceptional tanh" begin
     xa = T[NaN, 0.0, -0.0, Inf, -Inf, 10000, -10000]
     for x in xa
         @test cmpdenorm(Sleef.tanh(x),  Base.tanh(BigFloat(x)))
@@ -327,7 +327,7 @@ end
 end
 
 
-@testset "denormal/nonnumber asinh" begin
+@testset "exceptional asinh" begin
     xa = T[NaN, 0.0, -0.0, Inf, -Inf, 10000, -10000]
     for x in xa
         @test cmpdenorm(Sleef.asinh(x), Base.asinh(BigFloat(x)))
@@ -335,7 +335,7 @@ end
 end
 
 
-@testset "denormal/nonnumber acosh" begin
+@testset "exceptional acosh" begin
     xa = T[NaN, 0.0, -0.0, 1.0, Inf, -Inf, 10000, -10000]
     for x in xa
         @test cmpdenorm(Sleef.acosh(x), Base.acosh(BigFloat(x)))
@@ -343,7 +343,7 @@ end
 end
 
 
-@testset "denormal/nonnumber atanh" begin
+@testset "exceptional atanh" begin
     xa = T[NaN, 0.0, -0.0, 1.0, -1.0, Inf, -Inf, 10000, -10000]
     for x in xa
         @test cmpdenorm(Sleef.atanh(x), Base.atanh(BigFloat(x)))
@@ -351,7 +351,7 @@ end
 end
 
 
-@testset "denormal/nonnumber $xcbrt" for xcbrt = (Sleef.cbrt, Sleef.cbrt_fast)
+@testset "exceptional $xcbrt" for xcbrt = (Sleef.cbrt, Sleef.cbrt_fast)
     xa = T[NaN, Inf, -Inf, 0.0, -0.0]
     for x in xa
         @test cmpdenorm(Sleef.cbrt(x), Base.cbrt(BigFloat(x)))
@@ -359,7 +359,7 @@ end
 end
 
 
-@testset "denormal/nonnumber exp2" begin
+@testset "exceptional exp2" begin
     xa = T[NaN, Inf, -Inf]
     for x in xa
         @test cmpdenorm(Sleef.exp2(x), Base.exp2(BigFloat(x)))
@@ -367,7 +367,7 @@ end
 end
 
 
-@testset "denormal/nonnumber exp10" begin
+@testset "exceptional exp10" begin
     xa = T[NaN, Inf, -Inf]
     for x in xa
         @test cmpdenorm(Sleef.exp10(x), Base.exp10(BigFloat(x)))
@@ -375,7 +375,7 @@ end
 end
 
 
-@testset "denormal/nonnumber expm1" begin
+@testset "exceptional expm1" begin
     xa = T[NaN, Inf, -Inf, 0.0, -0.0]
     for x in xa
         @test cmpdenorm(Sleef.expm1(x), Base.expm1(BigFloat(x)))
@@ -384,7 +384,7 @@ end
 
 
 
-@testset "denormal/nonnumber $xlog" for xlog in (Sleef.log, Sleef.log_fast)
+@testset "exceptional $xlog" for xlog in (Sleef.log, Sleef.log_fast)
     xa = T[NaN, Inf, -Inf, 0, -1]
     for x in xa
         @test cmpdenorm(xlog(x), Base.log(BigFloat(x)))
@@ -392,7 +392,7 @@ end
 end
 
 
-@testset "denormal/nonnumber log10" begin
+@testset "exceptional log10" begin
     xa = T[NaN, Inf, -Inf, 0, -1]
     for x in xa
         @test cmpdenorm(Sleef.log10(x), Base.log10(BigFloat(x)))
@@ -400,7 +400,7 @@ end
 end
 
 
-@testset "denormal/nonnumber log2" begin
+@testset "exceptional log2" begin
     xa = T[NaN, Inf, -Inf, 0, -1]
     for x in xa
         @test cmpdenorm(Sleef.log2(x), Base.log2(BigFloat(x)))
@@ -408,7 +408,7 @@ end
 end
 
 
-@testset "denormal/nonnumber log1p" begin
+@testset "exceptional log1p" begin
     xa = T[NaN, Inf, -Inf, 0.0, -0.0, -1.0, -2.0]
     for x in xa
         @test cmpdenorm(Sleef.log1p(x), Base.log1p(BigFloat(x)))
@@ -416,7 +416,7 @@ end
 end
 
 
-@testset "denormal/nonnumber ldexp" begin
+@testset "exceptional ldexp" begin
     for i = -10000:10000
         a = Sleef.ldexp(T(1.0), i)
         b = Base.ldexp(BigFloat(1.0), i)
@@ -425,7 +425,7 @@ end
 end
 
 
-@testset "denormal/nonnumber ilogb" begin
+@testset "exceptional ilogb" begin
     @test Sleef.ilogb(+T(Inf)) == Sleef.INT_MAX
     @test Sleef.ilogb(-T(Inf)) == Sleef.INT_MAX
     @test Sleef.ilogb(+T(0.0)) == Sleef.FP_ILOGB0
@@ -435,4 +435,4 @@ end
 
 
 
-end #denormal/nonnumber
+end #exceptional

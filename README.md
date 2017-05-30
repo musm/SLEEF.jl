@@ -6,7 +6,8 @@ alt="SLEEF Logo" width="420"></img> </div>
 A pure Julia port of the [SLEEF math library](https://github.com/shibatch/sleef).
 
 **History**
-- Release [v0.1.0](https://github.com/musm/Sleef.jl/releases/tag/v0.1.0) based on SLEEF version v2.80
+- Release [v0.2.0](https://github.com/musm/Sleef.jl/releases/tag/v0.2.0) based on SLEEF v2.90
+- Release [v0.1.0](https://github.com/musm/Sleef.jl/releases/tag/v0.1.0) based on SLEEF v2.80
 
 <br><br>
 [![Travis Build Status](https://travis-ci.org/musm/Sleef.jl.svg?branch=master)](https://travis-ci.org/musm/Sleef.jl)
@@ -40,13 +41,21 @@ julia> Sleef.exp(3f0)
 The available functions include (within 1 ulp)
 ```julia
 sin, cos, tan, asin, acos, atan, atan2, sincos, sinh, cosh, tanh,
-    asinh, acosh, atanh, log, log2, log10, log1p, ilog2, exp, exp2, exp10, expm1, ldexp, cbrt, pow
+    asinh, acosh, atanh, log, log2, log10, log1p, ilogb, exp, exp2, exp10, expm1, ldexp, cbrt, pow
  ```
- Faster variants include (within 3 ulp)
 
+Faster variants (within 3 ulp)
  ```julia
 sin_fast, cos_fast, tan_fast, sincos_fast, asin_fast, acos_fast, atan_fast, atan2_fast, log_fast, cbrt_fast
 ```
+
+## Notes
+
+The trigonometric functions are tested to return values with specified
+accuracy when the argument is within the following range:
+
+- Double (Float64) precision trigonometric functions : `|arg| <= 10000000`
+- Single (Float32) precision trigonometric functions : `|arg| <= 10000`
 
 # Benchmarks
 
@@ -55,3 +64,4 @@ You can benchmark the performance of the Sleef.jl math library on your machine b
 ```julia
 include(joinpath(Pkg.dir("Sleef"), "benchmark", "benchmark.jl"))
 ```
+
