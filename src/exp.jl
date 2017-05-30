@@ -96,7 +96,7 @@ global @inline exp_kernel(x::Float64) = @horner x c1d c2d c3d c4d c5d c6d c7d c8
 global @inline exp_kernel(x::Float32) = @horner x c1f c2f c3f c4f c5f
 
 function exp(x::T) where {T<:IEEEFloat}
-    q = roundi(T(MLN2E) * x)
+    q = unsafe_trunc(Int, round(T(MLN2E) * x))
     s = muladd(q, -LN2U(T), x)
     s = muladd(q, -LN2L(T), s)
     u = exp_kernel(s)

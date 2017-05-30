@@ -17,8 +17,6 @@ const FMA_FAST = is_fma_fast(Float64) && is_fma_fast(Float32)
 # _sign emits better native code than sign but does not properly handle the Inf/NaN cases
 @inline _sign(d::T) where {T<:IEEEFloat} = flipsign(one(T), d)
 
-@inline roundi(x::T) where {T<:IEEEFloat} = unsafe_trunc(Int, round(x))
-
 @inline integer2float(::Type{Float64}, m::Int) = reinterpret(Float64, (m % Int64) << significand_bits(Float64))
 @inline integer2float(::Type{Float32}, m::Int) = reinterpret(Float32, (m % Int32) << significand_bits(Float32))
 

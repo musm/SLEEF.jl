@@ -1,4 +1,5 @@
 __precompile__()
+
 module Sleef
 
 # export sin, cos, tan, asin, acos, atan, atan2, sincos, sinh, cosh, tanh,
@@ -9,7 +10,7 @@ module Sleef
 
 using Base: Math.@horner, Math.exponent_bias, exponent_mask, Math.significand_bits, Math.IEEEFloat
 
-## constants (refactor later to all use dispatch)
+## constants
 
 const MLN2  = 6.931471805599453094172321214581765680755001343602552541206800094933936219696955e-01 # log(2)
 const MLN2E = 1.442695040888963407359924681001892137426645954152985934135449406931109219181187     # log2(e)
@@ -26,8 +27,6 @@ const M1SQRT2 = 7.07106781186547524400844362104849039284835937688474036588339868
 
 const M2P13 = 1.259921049894873164767210607278228350570251464701507980081975112155299676513956 # 2^1/3
 const M2P23 = 1.587401051968199474751705639272308260391493327899853009808285761825216505624206 # 2^2/3
-
-## constants (dispatch)
 
 MDLN10E(::Type{Float64}) = Double(0.4342944819032518, 1.098319650216765e-17) # log10(e)
 MDLN10E(::Type{Float32}) = Double(0.4342945f0, -1.010305f-8)
@@ -70,8 +69,9 @@ LN2L(::Type{Float64}) = 0.28235290563031577122588448175013436025525412068e-12
 LN2U(::Type{Float32}) = 0.693145751953125f0
 LN2L(::Type{Float32}) = 1.428606765330187045f-06
 
+
 include("utils.jl")  # utility functions
-include("double.jl") # Dekker style Double implementation
+include("double.jl") # Dekker style double double functions
 include("priv.jl")   # private math functions
 include("exp.jl")    # exponential functions
 include("log.jl")    # logarithmic functions
@@ -79,10 +79,20 @@ include("trig.jl")   # trigonometric and inverse trigonometric functions
 include("hyp.jl")    # hyperbolic and inverse hyperbolic functions
 include("misc.jl")   # miscallenous math functions including pow and cbrt
 
-# fallback definitions #FIXME add all
-for func in (:sin, :cos, :tan, :asin, :acos, :atan, :sinh, :cosh, :tanh,  :log, :log2, :log10, :log1p, :exp, :exp2, :exp10, :expm1)
+# fallback definitions
+for func in (:sin, :cos, :tan, :asin, :acos, :atan, :sinh, :cosh, :tanh,
+             :asinh, :acosh, :atanh, :log, :log2, :log10, :log1p, :exp, :exp2, :exp10, :expm1, :cbrt,
+             :sin_fast, :cos_fast, :tan_fast, :sincos_fast, :asin_fast, :acos_fast, :atan_fast, :atan2_fast, :log_fast, :cbrt_fast)
     @eval begin
+        $func(a::Float16) = Float16($func(Float32(a)))
         $func(x::Real) = $func(float(x))
+    end
+end
+
+for func in (:atan2, :hypot)
+    @eval begin
+        $func(y::Real, x::Real) = $func(promote(float(y), float(x))...)
+        $func(a::Float16,b::Float16) = Float16($func(Float32(a),Float32(b)))
     end
 end
 

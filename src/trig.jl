@@ -134,13 +134,14 @@ function sin_fast(x::T) where {T<:IEEEFloat}
 end
 
 function cos_fast(x::T) where {T<:IEEEFloat}
-    q = muladd(2, roundi(x * T(M1PI) - T(0.5)), 1)
+    q = muladd(2.0, round(x * T(M1PI) - T(0.5)), 1.0)
     x = muladd(q, -PI4A(T) * 2, x)
     x = muladd(q, -PI4B(T) * 2, x)
     x = muladd(q, -PI4C(T) * 2, x)
     x = muladd(q, -PI4D(T) * 2, x)
     s = x * x
-    q & 2 == 0 && (x = -x)
+    qi = unsafe_trunc(Int, q)
+    qi & 2 == 0 && (x = -x)
     u = sincos_fast_kernel(s)
     muladd(s, u * x, x)
 end
@@ -199,7 +200,7 @@ global @inline sincos_b_kernel(x::Float64) = @horner x b1d b2d b3d b4d b5d b6d b
 global @inline sincos_b_kernel(x::Float32) = @horner x b1f b2f b3f b4f b5f
 
 function sincos_fast(d::T) where {T<:IEEEFloat}
-    q  = roundi(d * T(M2PI))
+    q  = round(d * T(M2PI))
     s  = d
     s  = muladd(q, -PI4A(T) * 2, s)
     s  = muladd(q, -PI4B(T) * 2, s)
@@ -221,9 +222,10 @@ function sincos_fast(d::T) where {T<:IEEEFloat}
 
     ry = u * s + T(1.0)
 
-    q & 1 != 0 && (s = ry; ry = rx; rx = s)
-    q & 2 != 0 && (rx = -rx)
-    (q + 1) & 2 != 0 && (ry = -ry)
+    qi = unsafe_trunc(Int, q)
+    qi & 1 != 0 && (s = ry; ry = rx; rx = s)
+    qi & 2 != 0 && (rx = -rx)
+    (qi + 1) & 2 != 0 && (ry = -ry)
 
     isinf(d) && (rx = ry = T(NaN))
 
@@ -232,7 +234,7 @@ function sincos_fast(d::T) where {T<:IEEEFloat}
 end
 
 function sincos(d::T) where {T<:IEEEFloat}
-    q  = roundi(d * 2 * T(M1PI))
+    q  = round(d * 2 * T(M1PI))
     s  = dsub2(d, q * PI4A(T) * 2)
     s  = dsub2(s, q * PI4B(T) * 2)
     s  = dsub2(s, q * PI4C(T) * 2)
@@ -253,9 +255,10 @@ function sincos(d::T) where {T<:IEEEFloat}
     v  = dadd(T(1), dmul(sx, u))
     ry = T(v)
 
-    q & 1 != 0 && (u = ry; ry = rx; rx = u)
-    q & 2 != 0 && (rx = -rx)
-    (q + 1) & 2 != 0 && (ry = -ry)
+    qi = unsafe_trunc(Int, q)
+    qi & 1 != 0 && (u = ry; ry = rx; rx = u)
+    qi & 2 != 0 && (rx = -rx)
+    (qi + 1) & 2 != 0 && (ry = -ry)
 
     isinf(d) && (rx = ry = T(NaN))
 
