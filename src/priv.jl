@@ -33,7 +33,7 @@ Computes `a × 2^n`.
 """
 @inline function ldexpk(x::T, q::Int) where {T<:IEEEFloat}
     bias = exponent_bias(T)
-    emax = exponent_max(T)
+    emax = exponent_raw_max(T)
     m, q = split_exponent(T, q)
     m += bias
     m = ifelse(m < 0, 0, m)
@@ -65,7 +65,7 @@ where `significand ∈ [1, 2)`.
 @inline function ilogbk(d::T) where {T<:IEEEFloat}
     m = d < T(2)^-threshold_exponent(T)
     d = ifelse(m, d * T(2)^threshold_exponent(T), d)
-    q = float2integer(d) & exponent_max(T)
+    q = float2integer(d) & exponent_raw_max(T)
     q = ifelse(m, q - (threshold_exponent(T) + exponent_bias(T)), q - exponent_bias(T))
 end
 

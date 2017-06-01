@@ -1,6 +1,6 @@
 __precompile__()
 
-module Sleef
+module SLEEF
 
 # export sin, cos, tan, asin, acos, atan, atan2, sincos, sinh, cosh, tanh,
 #     asinh, acosh, atanh, log, log2, log10, log1p, ilogb, exp, exp2, exp10, expm1, ldexp, cbrt, pow
@@ -8,7 +8,7 @@ module Sleef
 # fast variants (within 3 ulp)
 # export sin_fast, cos_fast, tan_fast, sincos_fast, asin_fast, acos_fast, atan_fast, atan2_fast, log_fast, cbrt_fast
 
-using Base: Math.@horner, Math.exponent_bias, exponent_mask, Math.significand_bits, Math.IEEEFloat
+using Base.Math: @horner, exponent_bias, exponent_mask, significand_bits, IEEEFloat, exponent_raw_max
 
 ## constants
 
@@ -51,16 +51,20 @@ MD2P13(::Type{Float32}) = Double(1.2599211f0, -2.4018702f-8)
 MD2P23(::Type{Float64}) = Double(1.5874010519681996, -1.0869008194197823e-16) # 2^2/3
 MD2P23(::Type{Float32}) = Double(1.587401f0, 1.9520385f-8)
 
-# Split 4/pi into four parts (each is 26 bits)
-PI4A(::Type{Float64}) = 0.78539816290140151978 
-PI4B(::Type{Float64}) = 4.9604678871439933374e-10
-PI4C(::Type{Float64}) = 1.1258708853173288931e-18
-PI4D(::Type{Float64}) = 1.7607799325916000908e-27
+# Split pi into four parts (each is 26 bits)
+PIA(::Type{Float64}) = 3.1415926218032836914
+PIB(::Type{Float64}) = 3.1786509424591713469e-08
+PIC(::Type{Float64}) = 1.2246467864107188502e-16
+PID(::Type{Float64}) = 1.2736634327021899816e-24
 
-PI4A(::Type{Float32}) = 0.78515625f0
-PI4B(::Type{Float32}) = 0.00024187564849853515625f0
-PI4C(::Type{Float32}) = 3.7747668102383613586f-08
-PI4D(::Type{Float32}) = 1.2816720341285448015f-12
+PIA(::Type{Float32}) = 3.140625f0
+PIB(::Type{Float32}) = 0.0009670257568359375f0
+PIC(::Type{Float32}) = 6.2771141529083251953f-7
+PID(::Type{Float32}) = 1.2154201256553420762f-10
+
+# split 2/pi into upper and lower parts
+M2PIU(::Type{Float64}) = 0.63661977236758138243
+M2PIL(::Type{Float64}) = -3.9357353350364971764e-17
 
 # Split log(2) into upper and lower parts
 LN2U(::Type{Float64}) = 0.69314718055966295651160180568695068359375
@@ -69,6 +73,11 @@ LN2L(::Type{Float64}) = 0.28235290563031577122588448175013436025525412068e-12
 LN2U(::Type{Float32}) = 0.693145751953125f0
 LN2L(::Type{Float32}) = 1.428606765330187045f-06
 
+TRIG_MAX(::Type{Float64}) = 1e14
+SQRT_MAX(::Type{Float64}) = 1.3407807929942596355e154
+
+TRIG_MAX(::Type{Float32}) = 1f7
+SQRT_MAX(::Type{Float32}) = 18446743523953729536f0
 
 include("utils.jl")  # utility functions
 include("double.jl") # Dekker style double double functions

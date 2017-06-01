@@ -1,20 +1,20 @@
 <div align="center"> <img
-src="https://rawgit.com/musm/Sleef.jl/master/doc/src/assets/logo.svg"
+src="https://rawgit.com/musm/SLEEF.jl/master/doc/src/assets/logo.svg"
 alt="SLEEF Logo" width="420"></img> </div>
 
 
-A pure Julia port of the [SLEEF math library](https://github.com/shibatch/sleef).
+A pure Julia port of the [SLEEF math library](https://github.com/shibatch/SLEEF).
 
 **History**
-- Release [v0.3.0](https://github.com/musm/Sleef.jl/releases/tag/v0.3.0) based on SLEEF v2.100
-- Release [v0.2.0](https://github.com/musm/Sleef.jl/releases/tag/v0.2.0) based on SLEEF v2.90
-- Release [v0.1.0](https://github.com/musm/Sleef.jl/releases/tag/v0.1.0) based on SLEEF v2.80
+- Release [v0.3.0](https://github.com/musm/SLEEF.jl/releases/tag/v0.3.0) based on SLEEF v2.100
+- Release [v0.2.0](https://github.com/musm/SLEEF.jl/releases/tag/v0.2.0) based on SLEEF v2.90
+- Release [v0.1.0](https://github.com/musm/SLEEF.jl/releases/tag/v0.1.0) based on SLEEF v2.80
 
 <br><br>
-[![Travis Build Status](https://travis-ci.org/musm/Sleef.jl.svg?branch=master)](https://travis-ci.org/musm/Sleef.jl)
-[![Appveyor Build Status](https://ci.appveyor.com/api/projects/status/j7lpafn4uf1trlfi/branch/master?svg=true)](https://ci.appveyor.com/project/musm/sleef-jl/branch/master)
-[![Coverage Status](https://coveralls.io/repos/github/musm/Sleef.jl/badge.svg?branch=master)](https://coveralls.io/github/musm/Sleef.jl?branch=master)
-[![codecov.io](http://codecov.io/github/musm/Sleef.jl/coverage.svg?branch=master)](http://codecov.io/github/musm/Sleef.jl?branch=master)
+[![Travis Build Status](https://travis-ci.org/musm/SLEEF.jl.svg?branch=master)](https://travis-ci.org/musm/SLEEF.jl)
+[![Appveyor Build Status](https://ci.appveyor.com/api/projects/status/j7lpafn4uf1trlfi/branch/master?svg=true)](https://ci.appveyor.com/project/musm/SLEEF-jl/branch/master)
+[![Coverage Status](https://coveralls.io/repos/github/musm/SLEEF.jl/badge.svg?branch=master)](https://coveralls.io/github/musm/SLEEF.jl?branch=master)
+[![codecov.io](http://codecov.io/github/musm/SLEEF.jl/coverage.svg?branch=master)](http://codecov.io/github/musm/SLEEF.jl?branch=master)
 
 # Usage
 
@@ -27,15 +27,15 @@ julia> build_sysimg(force=true)
 and then restart `julia`. This will ensure you are taking full advantage of hardware [FMA](https://en.wikipedia.org/wiki/FMA_instruction_set)  if your CPU supports it.
 
 
-To use  `Sleef.jl`
+To use  `SLEEF.jl`
 ```julia
-julia> Pkg.clone("https://github.com/JuliaMath/Sleef.jl.git")
-julia> using Sleef
+julia> Pkg.clone("https://github.com/JuliaMath/SLEEF.jl.git")
+julia> using SLEEF
 
-julia> Sleef.exp(3.0)
+julia> SLEEF.exp(3.0)
 20.085536923187668
 
-julia> Sleef.exp(3f0)
+julia> SLEEF.exp(3f0)
 20.085537f0
 ```
 
@@ -55,14 +55,14 @@ sin_fast, cos_fast, tan_fast, sincos_fast, asin_fast, acos_fast, atan_fast, atan
 The trigonometric functions are tested to return values with specified
 accuracy when the argument is within the following range:
 
-- Double (Float64) precision trigonometric functions : `|arg| <= 10000000`
-- Single (Float32) precision trigonometric functions : `|arg| <= 10000`
+- Double (Float64) precision trigonometric functions : `[-1e+14, 1e+14]`
+- Single (Float32) precision trigonometric functions : `[-39000, 39000]`
 
 # Benchmarks
 
-You can benchmark the performance of the Sleef.jl math library on your machine by running
+You can benchmark the performance of the SLEEF.jl math library on your machine by running
 
 ```julia
-include(joinpath(Pkg.dir("Sleef"), "benchmark", "benchmark.jl"))
+include(joinpath(Pkg.dir("SLEEF"), "benchmark", "benchmark.jl"))
 ```
 

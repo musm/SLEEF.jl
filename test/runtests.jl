@@ -1,4 +1,4 @@
-using Sleef
+using SLEEF
 using Base.Test
 
 using Base.Math.significand_bits
@@ -120,7 +120,7 @@ function test_acc(T, fun_table, xx, tol; debug = false, tol_debug = 5)
 end
 
 function runtests()
-    @testset "Sleef" begin
+    @testset "SLEEF" begin
         include("exceptional.jl")
         include("accuracy.jl")
     end

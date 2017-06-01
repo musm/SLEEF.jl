@@ -1,8 +1,8 @@
-The Sleef.jl package is licensed under the MIT "Expat" License:
+The SLEEF.jl package is licensed under the MIT "Expat" License:
 
 > Copyright (c) 2016: Mustafa Mohamad and other contributors:
 > 
-> https://github.com/musm/Sleef.jl/graphs/contributors
+> https://github.com/musm/SLEEF.jl/graphs/contributors
 > 
 > Permission is hereby granted, free of charge, to any person obtaining a copy
 > of this software and associated documentation files (the "Software"), to deal
@@ -23,6 +23,6 @@ The Sleef.jl package is licensed under the MIT "Expat" License:
 > SOFTWARE.
 > 
 
-Sleef.jl includes ported code from the following project
+SLEEF.jl includes ported code from the following project
 
-- [sleef](https://github.com/shibatch/sleef) [public domain] Author Naoki Shibata
+- [SLEEF](https://github.com/shibatch/SLEEF) [public domain] Author Naoki Shibata

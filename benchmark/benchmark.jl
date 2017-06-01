@@ -1,4 +1,4 @@
-using Sleef
+using SLEEF
 using BenchmarkTools
 using JLD, DataStructures
 
@@ -6,7 +6,7 @@ const RETUNE  = false
 const VERBOSE = true
 const DETAILS = false
 const test_types = (Float64, Float32) # Which types do you want to bench?
-const bench = ("Base", "Sleef")
+const bench = ("Base", "SLEEF")
 const suite = BenchmarkGroup()
 for n in bench
     suite[n] = BenchmarkGroup([n])
@@ -110,18 +110,18 @@ end
 println("Running micro benchmarks...")
 results = run(suite; verbose=VERBOSE, seconds = 2)
 
-print_with_color(:blue, "Benchmarks: median ratio Sleef/Base\n")
+print_with_color(:blue, "Benchmarks: median ratio SLEEF/Base\n")
 for f in keys(micros)
     print_with_color(:magenta, string(f))
     for T in test_types
         println()
         print("time: ", )
-        tratio = ratio(median(results["Sleef"][f][string(T)]), median(results["Base"][f][string(T)])).time
+        tratio = ratio(median(results["SLEEF"][f][string(T)]), median(results["Base"][f][string(T)])).time
         tcolor = tratio > 3 ? :red : tratio < 1.5 ? :green : :blue
         print_with_color(tcolor, @sprintf("%.2f",tratio), " ", string(T))
         if DETAILS
-            print_with_color(:blue, "details Sleef/Base\n")
-            println(results["Sleef"][f][string(T)])
+            print_with_color(:blue, "details SLEEF/Base\n")
+            println(results["SLEEF"][f][string(T)])
             println(results["Base"][f][string(T)])
             println()
         end

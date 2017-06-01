@@ -6,9 +6,6 @@ for T in (Float32, Float64)
 end
 const FMA_FAST = is_fma_fast(Float64) && is_fma_fast(Float32)
 
-
-@inline exponent_max(::Type{T}) where {T<:IEEEFloat} = Int(exponent_mask(T) >> significand_bits(T))
-
 @inline isnegzero(x::T) where {T<:IEEEFloat} = x === T(-0.0)
 
 @inline ispinf(x::T) where {T<:IEEEFloat} = x ==  T(Inf)

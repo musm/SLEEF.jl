@@ -118,32 +118,56 @@ const c1f = -0.166666597127914428710938f0
 global @inline sincos_fast_kernel(x::Float64) = @horner x c1d c2d c3d c4d c5d c6d c7d c8d c9d
 global @inline sincos_fast_kernel(x::Float32) = @horner x c1f c2f c3f c4f c5f
 
-function sin_fast(x::T) where {T<:IEEEFloat}
-    q = round(x * T(M1PI))
-    d = muladd(q, -PI4A(T) * 4, x)
-    d = muladd(q, -PI4B(T) * 4, d)
-    d = muladd(q, -PI4C(T) * 4, d)
-    d = muladd(q, -PI4D(T) * 4, d)
+function sin_fast(d::T) where {T<:IEEEFloat}
+    t = d
+    qh = trunc(d * (T(M1PI) / (1 << 24)))
+    ql = round(d * T(M1PI) - qh * (1 << 24))
+
+    d = muladd(qh, -PIA(T) * (1 << 24), d)
+    d = muladd(ql, -PIA(T), d)
+    d = muladd(qh, -PIB(T) * (1 << 24), d)
+    d = muladd(ql, -PIB(T), d)
+    d = muladd(qh, -PIC(T) * (1 << 24), d)
+    d = muladd(ql, -PIC(T), d)
+
     s = d * d
-    qi = unsafe_trunc(Int, q)
-    qi & 1 != 0 && (d = -d)
+    
+    qli = unsafe_trunc(Int, ql)
+    qli & 1 != 0 && (d = -d)
+    
     u = sincos_fast_kernel(s)
     u = muladd(s, u * d, d)
-    isnegzero(x) && (u = T(-0.0))
+    
+    !isinf(t) && (isnegzero(t) || abs(t) > TRIG_MAX(T)) && (u = T(-0.0))
+
     return u
 end
 
-function cos_fast(x::T) where {T<:IEEEFloat}
-    q = muladd(2.0, round(x * T(M1PI) - T(0.5)), 1.0)
-    x = muladd(q, -PI4A(T) * 2, x)
-    x = muladd(q, -PI4B(T) * 2, x)
-    x = muladd(q, -PI4C(T) * 2, x)
-    x = muladd(q, -PI4D(T) * 2, x)
-    s = x * x
-    qi = unsafe_trunc(Int, q)
-    qi & 2 == 0 && (x = -x)
+function cos_fast(d::T) where {T<:IEEEFloat}
+    t = d
+
+    qh = trunc(d * (T(M1PI) / (1 << 23)) - T(0.5) * (T(M1PI) / (1 << 23)))
+    ql = 2*round(d * T(M1PI) - T(0.5) - qh * (1 << 23)) + T(1.0)
+    
+    d = muladd(qh, -PIA(T) * T(0.5) * (1 << 24), d)
+    d = muladd(ql, -PIA(T) * T(0.5), d)
+    d = muladd(qh, -PIB(T) * T(0.5) * (1 << 24), d)
+    d = muladd(ql, -PIB(T) * T(0.5), d)
+    d = muladd(qh, -PIC(T) * T(0.5) * (1 << 24), d)
+    d = muladd(ql, -PIC(T) * T(0.5), d)
+    d = muladd(qh * (1 << 24) + ql, - PID(T) * T(0.5), d)
+
+    s = d * d
+
+    qli = unsafe_trunc(Int, ql)
+    qli & 2 == 0 && (d = -d)
+
     u = sincos_fast_kernel(s)
-    muladd(s, u * x, x)
+    u = muladd(s, u * d, d)
+
+    !isinf(t) && (abs(t) > TRIG_MAX(T)) && (u = T(0.0))
+
+    return u
 end
 end
 
