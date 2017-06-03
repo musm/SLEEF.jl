@@ -1,4 +1,4 @@
-import Base: -, <, copysign, flipsign, normalize, convert
+import Base: -, <, copysign, flipsign, convert
 
 struct Double{T<:IEEEFloat} <: Number
     hi::T
@@ -6,8 +6,7 @@ struct Double{T<:IEEEFloat} <: Number
 end
 Double(x::T) where {T<:IEEEFloat} = Double(x, zero(T))
 
-convert(::Type{Tuple{T,T}}, x::Double{T}) where {T<:IEEEFloat} = (x.hi, x.lo)
-convert(::Type{T}, x::Double) where {T<:IEEEFloat} = x.hi + x.lo
+convert(::Type{T}, x::Double{T}) where {T<:IEEEFloat} = x.hi + x.lo
 
 
 @inline trunclo(x::Float64) = reinterpret(Float64, reinterpret(UInt64, x) & 0xffff_ffff_f800_0000) # clear lower 27 bits (leave upper 26 bits)
@@ -18,7 +17,7 @@ convert(::Type{T}, x::Double) where {T<:IEEEFloat} = x.hi + x.lo
     hx, x - hx
 end
 
-@inline function normalize(x::Double{T}) where {T}
+@inline function dnormalize(x::Double{T}) where {T}
     r = x.hi + x.lo
     Double(r, (x.hi - r) + x.lo)
 end
@@ -182,12 +181,12 @@ if FMA_FAST
     end
 
     # 1/x
-    @inline function ddrec(x::T) where {T<:IEEEFloat}
+    @inline function drec(x::T) where {T<:IEEEFloat}
         zhi = 1 / x
         Double(zhi, fma(-zhi, x, one(T)) * zhi)
     end
 
-    @inline function ddrec(x::Double{T}) where {T<:IEEEFloat}
+    @inline function drec(x::Double{T}) where {T<:IEEEFloat}
         zhi = 1 / x.hi
         Double(zhi, (fma(-zhi, x.hi, one(T)) + -zhi * x.lo) * zhi)
     end
@@ -256,13 +255,13 @@ else
 
 
     # 1/x
-    @inline function ddrec(x::T) where {T<:IEEEFloat}
+    @inline function drec(x::T) where {T<:IEEEFloat}
         c = 1 / x
         u = dmul(c, x)
         Double(c, (one(T) - u.hi - u.lo) * c)
     end
 
-    @inline function ddrec(x::Double{T}) where {T<:IEEEFloat}
+    @inline function drec(x::Double{T}) where {T<:IEEEFloat}
         c = 1 / x.hi
         u = dmul(c, x.hi)
         Double(c, (one(T) - u.hi - u.lo - c * x.lo) * c)

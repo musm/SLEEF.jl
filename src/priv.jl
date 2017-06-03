@@ -123,7 +123,7 @@ global @inline atan2k_fast_kernel(x::Float32) = @horner x c1f c2f c3f c4f c5f c6
     t = s * s
     u = atan2k_fast_kernel(t)
     t = u * t * s + s
-    q * T(MPI2) + t
+    q * T(PI_2) + t
 end
 
 
@@ -141,11 +141,18 @@ global @inline atan2k_kernel(x::Double{Float32}) = dadd(c1f, x.hi * (@horner x.h
         y = -t
         q += 1
     end
+
     s = ddiv(y, x)
     t = dsqu(s)
+    t = dnormalize(t)
+
     u = atan2k_kernel(t)
-    t = dmul(s, dadd(T(1), dmul(t, u)))
-    dadd(dmul(T(q), MDPI2(T)), t)
+
+    t = dmul(t, u)
+    t = dmul(s, dadd(T(1.0), t))
+    T <: Float64 && abs(s.hi) < 1e-200 && (t = s)
+    t = dadd(dmul(T(q), MDPI2(T)), t)
+    return t
 end
 end
 
@@ -174,31 +181,48 @@ const c1f = 0.499999850988388061523438f0
 global @inline expk_kernel(x::Float64) = @horner x c1d c2d c3d c4d c5d c6d c7d c8d c9d c10d
 global @inline expk_kernel(x::Float32) = @horner x c1f c2f c3f c4f c5f
 
+global under_expk(::Type{Float64}) = -1000.0
+global under_expk(::Type{Float32}) = -104f0
+
 @inline function expk(d::Double{T}) where {T<:IEEEFloat}
     q = round(T(d) * T(MLN2E))
-    s = dadd(d, -q * LN2U(T))
-    s = dadd(s, -q * LN2L(T))
+
+    s = dadd(d, q * -L2U(T))
+    s = dadd(s, q * -L2L(T))
+
+    s = dnormalize(s)
+
     u = expk_kernel(T(s))
+
     t = dadd(s, dmul(dsqu(s), u))
-    t = dadd(T(1), t)
-    ldexpk(T(t), unsafe_trunc(Int, q))
+
+    t = dadd(T(1.0), t)
+
+    u = ldexpk(T(t), unsafe_trunc(Int, q))
+
+    (d.hi < under_expk(T)) && (u = T(0.0))
+
+    return u
 end
 
 
 @inline function expk2(d::Double{T}) where {T<:IEEEFloat}
     q = round(T(d) * T(MLN2E))
-    s = dadd(d, -q * LN2U(T))
-    s = dadd(s, -q * LN2L(T))
+
+    s = dadd(d, -q * L2U(T))
+    s = dadd(s, -q * L2L(T))
+
     u = expk_kernel(s.hi)
+
     t = dadd(s, dmul(dsqu(s), u))
-    t = dadd(T(1), t)
-    scale(t, pow2i(T, unsafe_trunc(Int, q)))
+
+    t = dadd(T(1.0), t)
+    return scale(scale(t, T(2.0)), pow2i(T, unsafe_trunc(Int, q - 1)))
 end
 end
 
 
 let
-global logk
 global logk2
 
 const c8d = 0.13860436390467167910856
@@ -210,36 +234,59 @@ const c3d = 0.285714285511134091777308
 const c2d = 0.400000000000914013309483
 const c1d = 0.666666666666664853302393
 
-const c4f = 0.2392828464508056640625f0
-const c3f = 0.28518211841583251953125f0
-const c2f = 0.400005877017974853515625f0
+const c4f = 0.240320354700088500976562f0
+const c3f = 0.285112679004669189453125f0
+const c2f = 0.400007992982864379882812f0
 const c1f = 0.666666686534881591796875f0
 
-global @inline logk_kernel(x::Float64) = @horner x c1d c2d c3d c4d c5d c6d c7d c8d
-global @inline logk_kernel(x::Float32) = @horner x c1f c2f c3f c4f
-
-@inline function logk(d::T) where {T<:IEEEFloat}
-    e  = ilogbk(d * T(1.0/0.75))
-    m  = ldexpk(d, -e)
-
-    x  = ddiv(dsub2(m, T(1)), dadd2(T(1), m))
-    x2 = dsqu(x)
-
-    t  = logk_kernel(x2.hi)
-
-    dadd(dmul(MDLN2(T), T(e)), dadd(scale(x, T(2)), dmul(dmul(x2, x), t)))
-end
-
+global @inline logk2_kernel(x::Float64) = @horner x c1d c2d c3d c4d c5d c6d c7d c8d
+global @inline logk2_kernel(x::Float32) = @horner x c1f c2f c3f c4f
 
 @inline function logk2(d::Double{T}) where {T<:IEEEFloat}
     e  = ilogbk(d.hi * T(1.0/0.75))
     m  = scale(d, pow2i(T, -e))
 
-    x  = ddiv(dsub2(m, T(1)), dadd2(m, T(1)))
+    x  = ddiv(dsub2(m, T(1.0)), dadd2(m, T(1.0)))
     x2 = dsqu(x)
 
-    t  = logk_kernel(x2.hi)
+    t  = logk2_kernel(x2.hi)
 
-    dadd(dmul(MDLN2(T), T(e)), dadd(scale(x, T(2)), dmul(dmul(x2, x), t)))
+    dadd(dmul(MDLN2(T), T(e)), dadd(scale(x, T(2.0)), dmul(dmul(x2, x), t)))
 end
+end
+
+let
+global logk
+const c10d = 0.116255524079935043668677
+const c9d = 0.103239680901072952701192
+const c8d = 0.117754809412463995466069
+const c7d = 0.13332981086846273921509
+const c6d = 0.153846227114512262845736
+const c5d = 0.181818180850050775676507
+const c4d = 0.222222222230083560345903
+const c3d = 0.285714285714249172087875
+const c2d = 0.400000000000000077715612
+const c1dd = Double(0.666666666666666629659233, 3.80554962542412056336616e-17);
+
+const c4f = 0.240320354700088500976562f0
+const c3f = 0.285112679004669189453125f0
+const c2f = 0.400007992982864379882812f0
+const c1fd = Double(0.66666662693023681640625f0, 3.69183861259614332084311f-9)
+
+global @inline logk_kernel(x::Double{Float64}) = dadd2(c1dd, dmul(x, @horner x.hi c2d c3d c4d c5d c6d c7d c8d c9d c10d))
+global @inline logk_kernel(x::Double{Float32}) = dadd2(c1fd, dmul(x, @horner x.hi c2f c3f c4f))
+
+@inline function logk(d::T) where {T<:IEEEFloat}
+    e  = ilogbk(d * T(1.0/0.75))
+    m  = ldexpk(d, -e)
+
+    x  = ddiv(dsub2(m, T(1.0)), dadd2(T(1.0), m))
+    x2 = dsqu(x)
+
+    t  = logk_kernel(x2)
+
+    dadd(dmul(MDLN2(T), T(e)), dadd(scale(x, T(2.0)), dmul(dmul(x2, x), t)))
+end
+
+
 end

@@ -5,7 +5,7 @@ IntF(::Type{Float64}) = Int64
 IntF(::Type{Float32}) = Int32
 
 
-@testset "Accuracy (max error in ulp) for $T" for T in (Float64, Float32)
+@testset "Accuracy (max error in ulp) for $T" for T in (Float32, Float64)
     println("Accuracy tests for $T")
 
 

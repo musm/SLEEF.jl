@@ -31,12 +31,14 @@ end
 
 Returns the base `10` logarithm of `x`.
 """
-function log10(x::T) where {T<:IEEEFloat}
-    u = T(dmul(logk(x), MDLN10E(T)))
-    isinf(x) && (u = T(Inf))
-    x < 0  && (u = T(NaN))
-    x == 0 && (u = T(-Inf))
-    return u
+function log10(a::T) where {T<:IEEEFloat}
+    x = T(dmul(logk(a), MDLN10E(T)))
+
+    isinf(a) && (x = T(Inf))
+    a < 0  && (x = T(NaN))
+    a == 0 && (x = T(-Inf))
+
+    return x
 end
 
 
@@ -47,27 +49,32 @@ Returns the base `2` logarithm of `x`.
 """
 function log2(x::T) where {T<:IEEEFloat}
     u = T(dmul(logk(x), MDLN2E(T)))
+
     isinf(x) && (u = T(Inf))
     x < 0  && (u = T(NaN))
     x == 0 && (u = T(-Inf))
+
     return u
 end
 
+
+const over_log1p(::Type{Float64}) = 1e307
+const over_log1p(::Type{Float32}) = 1f38
 
 """
     log1p(x)
 
 Accurately compute the natural logarithm of 1+x.
 """
-function log1p(x::T) where {T<:IEEEFloat}
-    u = T(logk2(dadd2(x, T(1.0))))
+function log1p(a::T) where {T<:IEEEFloat}
+    x = T(logk2(dadd2(a, T(1.0))))
 
-    isinf(x) && (u = T(Inf))
-    x < -1 && (u = T(NaN))
-    x == -1 && (u = -T(Inf))
-    isnegzero(x) && (u = T(-0.0))
+    a > over_log1p(T) && (x = T(Inf))
+    a < -1 && (x = T(NaN))
+    a == -1 && (x = T(-Inf))
+    isnegzero(a) && (x = T(-0.0))
 
-    return u
+    return x
 end
 
 
@@ -77,12 +84,14 @@ end
 Compute the natural logarithm of `x`. The inverse of the natural logarithm is
 the natural expoenential function `exp(x)`
 """
-function log(x::T) where {T<:IEEEFloat}
-    u = T(logk(x))
-    isinf(x) && (u = T(Inf))
-    x < 0  && (u = T(NaN))
-    x == 0 && (u = -T(Inf))
-    return u
+function log(d::T) where {T<:IEEEFloat}
+    x = T(logk(d))
+
+    isinf(d) && (x = T(Inf))
+    d < 0  && (x = T(NaN))
+    d == 0 && (x = -T(Inf))
+
+    return x
 end
 
 # First we split the argument to its mantissa `m` and integer exponent `e` so
@@ -129,18 +138,21 @@ const c1f = 2f0
 global @inline log_fast_kernel(x::Float64) = @horner x c1d c2d c3d c4d c5d c6d c7d c8d
 global @inline log_fast_kernel(x::Float32) = @horner x c1f c2f c3f c4f c5f
 
-function log_fast(x::T) where {T<:IEEEFloat}
-    e  = ilogbk(T(1.0/0.75) * x)
-    m  = ldexpk(x, -e)
-    u  = (m - 1) / (m + 1)
-    u2 = u * u
+function log_fast(d::T) where {T<:IEEEFloat}
+    e  = ilogbk(d * T(1.0/0.75))
+    m  = ldexpk(d, -e)
 
-    t  = log_fast_kernel(u2)
-    u  = muladd(u, t, T(MLN2) * e)
+    x  = (m - 1) / (m + 1)
+    x2 = x * x
+
+    t  = log_fast_kernel(x2)
     
-    isinf(x) && (u = T(Inf))
-    x < 0 && (u = T(NaN))
-    x == 0 && (u = -T(Inf))
-    return u
+    x  = x * t + T(MLN2) * e
+    
+    isinf(d) && (x = T(Inf))
+    d < 0 && (x = T(NaN))
+    d == 0 && (x = -T(Inf))
+
+    return x
 end
 end

@@ -271,7 +271,7 @@ end
 
 
 @testset "exceptional $xtan" for xtan in (SLEEF.tan_fast, SLEEF.tan)
-    xa = T[NaN, Inf, -Inf, -0.0, 0.0, pi/2, -pi/2, -0.0, 0.0]
+    xa = T[NaN, Inf, -Inf, -0.0, 0.0, pi/2, -pi/2]
     for x in xa
         @test cmpdenorm(xtan(x), Base.tan(BigFloat(x)))
     end

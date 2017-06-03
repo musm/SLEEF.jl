@@ -20,14 +20,14 @@ Compute the base-`2` exponential of `x`, that is `2ˣ`.
 function exp2(x::T) where {T<:IEEEFloat}
     u = expk(dmul(MDLN2(T), x))
     x > over_e2(T) && (u = T(Inf))
-    isninf(x) && (u = T(0))
+    isninf(x) && (u = T(0.0))
     return u
 end
 
 
 
-const over_e10(::Type{Float64}) = 308
-const over_e10(::Type{Float32}) = 38f0
+const over_e10(::Type{Float64}) = 3.08254715559916743851e2 # log 2^1023*(2-2^-52)
+const over_e10(::Type{Float32}) = 38.531839419103626f0 # log 2^127 *(2-2^-23) 
 
 """
     exp10(x)
@@ -37,17 +37,17 @@ Compute the base-`10` exponential of `x`, that is `10ˣ`.
 function exp10(x::T) where {T<:IEEEFloat}
     u = expk(dmul(MDLN10(T), x))
     x > over_e10(T) && (u = T(Inf))
-    isninf(x) && (u = T(0))
+    isninf(x) && (u = T(0.0))
     return u
 end
 
 
 
-const over_em1(::Type{Float64}) = 700.0
-const over_em1(::Type{Float32}) = 88f0
+const over_em1(::Type{Float64}) = 7.09782712893383996732e2 # log 2^1023*(2-2^-52)
+const over_em1(::Type{Float32}) = 88.72283905206835f0 # log 2^127 *(2-2^-23)
 
-const under_em1(::Type{Float64}) = -0.36043653389117156089696070315825181539851971360337e2
-const under_em1(::Type{Float32}) = -0.15942385152878742116596338793538061065739925620174f2
+const under_em1(::Type{Float64}) = -36.736800569677101399113302437
+const under_em1(::Type{Float32}) = -16.635532333438687426013570f0
 
 """
     expm1(x)
@@ -63,6 +63,8 @@ function expm1(x::T) where {T<:IEEEFloat}
 end
 
 
+const under_e(::Type{Float64}) = -1000.0
+const under_e(::Type{Float32}) = -104f0
 
 """
     exp(x)
@@ -86,23 +88,28 @@ const c3d  = 0.0416666666666665047591422
 const c2d  = 0.166666666666666851703837
 const c1d  = 0.50
 
-const c5f = 0.00136324646882712841033936f0
-const c4f = 0.00836596917361021041870117f0
-const c3f = 0.0416710823774337768554688f0
-const c2f = 0.166665524244308471679688f0
-const c1f = 0.499999850988388061523438f0
+const c6f = 0.000198527617612853646278381f0
+const c5f = 0.00139304355252534151077271f0
+const c4f = 0.00833336077630519866943359f0
+const c3f = 0.0416664853692054748535156f0
+const c2f = 0.166666671633720397949219f0
+const c1f = 0.5f0
 
 global @inline exp_kernel(x::Float64) = @horner x c1d c2d c3d c4d c5d c6d c7d c8d c9d c10d c11d  
-global @inline exp_kernel(x::Float32) = @horner x c1f c2f c3f c4f c5f
+global @inline exp_kernel(x::Float32) = @horner x c1f c2f c3f c4f c5f c6f
 
-function exp(x::T) where {T<:IEEEFloat}
-    q = unsafe_trunc(Int, round(T(MLN2E) * x))
-    s = muladd(q, -LN2U(T), x)
-    s = muladd(q, -LN2L(T), s)
+function exp(d::T) where {T<:IEEEFloat}
+    q = unsafe_trunc(Int, round(T(MLN2E) * d))
+    s = muladd(q, -L2U(T), d)
+    s = muladd(q, -L2L(T), s)
+
     u = exp_kernel(s)
+
     u = s * s * u + s + 1
     u = ldexpk(u, q)
-    isninf(x) && (u = T(0))
+
+    d < under_e(T) && (u = T(0))
+
     return u
 end
 end

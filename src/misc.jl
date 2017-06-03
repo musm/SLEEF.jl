@@ -6,19 +6,21 @@ Exponentiation operator, returns `x` raised to the power `y`.
 """
 function pow(x::T, y::T) where {T<:IEEEFloat}
     yi = unsafe_trunc(Int, y)
-    yint = yi == y
-    yodd = isodd(yi) && yint
-    z = expk(dmul(logk(abs(x)), y))
-    z = isnan(z) ? T(Inf) : z
-    z *= (x >= 0 ? T(1) : (!yint ? T(NaN) : (yodd ? -T(1) : T(1))))
+    yisint = yi == y
+    yisodd = isodd(yi) && yisint
+    
+    result = expk(dmul(logk(abs(x)), y))
+
+    result = isnan(result) ? T(Inf) : result
+    result *= (x > 0 ? T(1.0) : (!yisint ? T(NaN) : (yisodd ? -T(1.0) : T(1.0))))
+
     efx = flipsign(abs(x) - 1, y)
-    isinf(y) && (z = efx < 0 ? T(0) : (efx == 0 ? T(1) : T(Inf)))
-    if isinf(x) || x == 0
-        z = (yodd ? _sign(x) : T(1)) * ((x == 0 ? -y : y) < 0 ? T(0) : T(Inf))
-    end
-    (isnan(x) || isnan(y)) && (z = T(NaN))
-    (y == 0 || x == 1) && (z = T(1))
-    return z
+    isinf(y) && (result = efx < 0 ? T(0) : (efx == 0 ? T(1.0) : T(Inf)))
+    (isinf(x) || x == 0) && (result = (yisodd ? _sign(x) : T(1.0)) * ((x == 0 ? -y : y) < 0 ? T(0.0) : T(Inf)))
+    (isnan(x) || isnan(y)) && (result = T(NaN))
+    (y == 0 || x == 1) && (result = T(1.0))
+
+    return result
 end
 
 
@@ -50,7 +52,7 @@ global @inline cbrt_kernel(x::Float32) = @horner x c1f c2f c3f c4f c5f c6f
 Return `x^{1/3}`.
 """
 function cbrt_fast(d::T) where {T<:IEEEFloat}
-    e  = ilogbk(d) + 1
+    e  = ilogbk(abs(d)) + 1
     d  = ldexpk(d, -e)
     r  = (e + 6144) % 3
     q  = r == 1 ? T(M2P13) : T(1)
@@ -73,7 +75,7 @@ end
 Return `x^{1/3}`. The prefix operator `∛` is equivalent to `cbrt`.
 """
 function cbrt(d::T) where {T<:IEEEFloat}
-    e  = ilogbk(d) + 1
+    e  = ilogbk(abs(d)) + 1
     d  = ldexpk(d, -e)
     r  = (e + 6144) % 3
     q2 = r == 1 ? MD2P13(T) : Double(T(1))

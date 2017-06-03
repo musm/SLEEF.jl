@@ -6,6 +6,7 @@ alt="SLEEF Logo" width="420"></img> </div>
 A pure Julia port of the [SLEEF math library](https://github.com/shibatch/SLEEF).
 
 **History**
+- Release [v0.4.0](https://github.com/musm/SLEEF.jl/releases/tag/v0.4.0) based on SLEEF v2.110
 - Release [v0.3.0](https://github.com/musm/SLEEF.jl/releases/tag/v0.3.0) based on SLEEF v2.100
 - Release [v0.2.0](https://github.com/musm/SLEEF.jl/releases/tag/v0.2.0) based on SLEEF v2.90
 - Release [v0.1.0](https://github.com/musm/SLEEF.jl/releases/tag/v0.1.0) based on SLEEF v2.80

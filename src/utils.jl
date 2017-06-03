@@ -8,8 +8,8 @@ const FMA_FAST = is_fma_fast(Float64) && is_fma_fast(Float32)
 
 @inline isnegzero(x::T) where {T<:IEEEFloat} = x === T(-0.0)
 
-@inline ispinf(x::T) where {T<:IEEEFloat} = x ==  T(Inf)
-@inline isninf(x::T) where {T<:IEEEFloat} = x == -T(Inf)
+@inline ispinf(x::T) where {T<:IEEEFloat} = x == T(Inf)
+@inline isninf(x::T) where {T<:IEEEFloat} = x == T(-Inf)
 
 # _sign emits better native code than sign but does not properly handle the Inf/NaN cases
 @inline _sign(d::T) where {T<:IEEEFloat} = flipsign(one(T), d)
