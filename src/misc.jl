@@ -96,7 +96,7 @@ function cbrt(d::T) where {T<:IEEEFloat}
     v  = dadd(dsqu(z), y)
     v  = dmul(v, d)
     v  = dmul(v, q2)
-    z  = ldexp(T(v), (e + 6144) ÷ 3 - 2048)
+    z  = ldexpk(T(v), (e + 6144) ÷ 3 - 2048)
     isinf(d) && (z = flipsign(T(Inf), q2.hi))
     d == 0   && (z = flipsign(T(0), q2.hi))
     return z
