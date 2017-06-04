@@ -62,6 +62,8 @@ function expm1(x::T) where {T<:IEEEFloat}
     return u
 end
 
+const over_e(::Type{Float64}) = 709.78271114955742909217217426
+const over_e(::Type{Float32}) = 104f0
 
 const under_e(::Type{Float64}) = -1000.0
 const under_e(::Type{Float32}) = -104f0
@@ -106,9 +108,10 @@ function exp(d::T) where {T<:IEEEFloat}
     u = exp_kernel(s)
 
     u = s * s * u + s + 1
-    u = ldexpk(u, q)
+    u = ldexp2k(u, q)
 
     d < under_e(T) && (u = T(0))
+    d > over_e(T) && (u = T(Inf))
 
     return u
 end

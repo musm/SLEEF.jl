@@ -769,6 +769,8 @@ end
 end
 
 
+const under_atan2(::Type{Float64}) = 5.5626846462680083984e-309
+const under_atan2(::Type{Float32}) = 2.9387372783541830947f-39
 
 """
     atan2(x, y)
@@ -776,16 +778,18 @@ end
 Compute the inverse tangent of `x/y`, using the signs of both `x` and `y` to determine the quadrant of the return value.
 """
 function atan2(x::T, y::T) where {T<:IEEEFloat}
+    abs(y) < under_atan2(T) && (x *= T(1 << 53); y *= T(1 << 53))
     r = T(atan2k(Double(abs(x)), Double(y)))
+
     r = flipsign(r, y)
     if isinf(y) || y == 0
-        r = T(PI_2) - (isinf(y) ? _sign(y) * T(PI_2) : T(0))
+        r = T(PI_2) - (isinf(y) ? _sign(y) * T(PI_2) : T(0.0))
     end
     if isinf(x)
-        r = T(PI_2) - (isinf(y) ? _sign(y) * T(PI_4) : T(0))
+        r = T(PI_2) - (isinf(y) ? _sign(y) * T(PI_4) : T(0.0))
     end
     if x == 0
-        r = _sign(y) == -1 ? T(M_PI) : T(0)
+        r = _sign(y) == -1 ? T(M_PI) : T(0.0)
     end
     return isnan(y) || isnan(x) ? T(NaN) : flipsign(r, x)
 end

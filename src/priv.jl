@@ -45,9 +45,13 @@ Computes `a × 2^n`.
     x * u
 end
 
-@inline ldexpk2(x::T, e::Int) where {T<:IEEEFloat} = x * pow2i(T, e >> UInt(1)) * pow2i(T, e - (e >> UInt(1)))
+@inline function ldexp2k(x::T, e::Int) where {T<:IEEEFloat}
+    x * pow2i(T, e >> 1) * pow2i(T, e - (e >> 1))
+end
 
-
+@inline function ldexp3k(x::T, e::Int) where {T<:IEEEFloat}
+    reinterpret(T, reinterpret(Unsigned, x) + (e << significand_bits(T)) % fpinttype(T))
+end
 
 # threshold values for `ilogbk`
 const threshold_exponent(::Type{Float64}) = 300
@@ -67,6 +71,10 @@ where `significand ∈ [1, 2)`.
     d = ifelse(m, d * T(2)^threshold_exponent(T), d)
     q = float2integer(d) & exponent_raw_max(T)
     q = ifelse(m, q - (threshold_exponent(T) + exponent_bias(T)), q - exponent_bias(T))
+end
+
+@inline function ilogb2k(d::T) where {T<:IEEEFloat}
+    (float2integer(d) & exponent_raw_max(T)) - exponent_bias(T)
 end
 
 
@@ -277,8 +285,13 @@ global @inline logk_kernel(x::Double{Float64}) = dadd2(c1dd, dmul(x, @horner x.h
 global @inline logk_kernel(x::Double{Float32}) = dadd2(c1fd, dmul(x, @horner x.hi c2f c3f c4f))
 
 @inline function logk(d::T) where {T<:IEEEFloat}
-    e  = ilogbk(d * T(1.0/0.75))
-    m  = ldexpk(d, -e)
+    o = d < realmin(T)
+    o && (d *= T(1 << 32) * T(1 << 32))
+
+    e  = ilogb2k(d * T(1.0/0.75))
+    m  = ldexp3k(d, -e)
+
+    o && (e -= 64)
 
     x  = ddiv(dsub2(m, T(1.0)), dadd2(T(1.0), m))
     x2 = dsqu(x)

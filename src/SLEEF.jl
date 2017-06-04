@@ -8,7 +8,7 @@ module SLEEF
 # fast variants (within 3 ulp)
 # export sin_fast, cos_fast, tan_fast, sincos_fast, asin_fast, acos_fast, atan_fast, atan2_fast, log_fast, cbrt_fast
 
-using Base.Math: @horner, exponent_bias, exponent_mask, significand_bits, IEEEFloat, exponent_raw_max
+using Base.Math: @horner, fpinttype, exponent_bias, exponent_mask, significand_bits, IEEEFloat, exponent_raw_max
 
 ## constants
 

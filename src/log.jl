@@ -1,7 +1,9 @@
 # exported logarithmic functions
+
 const FP_ILOGB0   = typemin(Int)
 const FP_ILOGBNAN = typemin(Int)
 const INT_MAX     = typemax(Int)
+
 """
     ilogb(x)
 
@@ -35,7 +37,7 @@ function log10(a::T) where {T<:IEEEFloat}
     x = T(dmul(logk(a), MDLN10E(T)))
 
     isinf(a) && (x = T(Inf))
-    a < 0  && (x = T(NaN))
+    (a < 0 || isnan(a)) && (x = T(NaN))
     a == 0 && (x = T(-Inf))
 
     return x
@@ -47,12 +49,12 @@ end
 
 Returns the base `2` logarithm of `x`.
 """
-function log2(x::T) where {T<:IEEEFloat}
-    u = T(dmul(logk(x), MDLN2E(T)))
+function log2(a::T) where {T<:IEEEFloat}
+    u = T(dmul(logk(a), MDLN2E(T)))
 
-    isinf(x) && (u = T(Inf))
-    x < 0  && (u = T(NaN))
-    x == 0 && (u = T(-Inf))
+    isinf(a) && (u = T(Inf))
+    (a < 0 || isnan(a)) && (u = T(NaN))
+    a == 0 && (u = T(-Inf))
 
     return u
 end
@@ -88,7 +90,7 @@ function log(d::T) where {T<:IEEEFloat}
     x = T(logk(d))
 
     isinf(d) && (x = T(Inf))
-    d < 0  && (x = T(NaN))
+    (d < 0 || isnan(d)) && (x = T(NaN))
     d == 0 && (x = -T(Inf))
 
     return x
@@ -139,8 +141,13 @@ global @inline log_fast_kernel(x::Float64) = @horner x c1d c2d c3d c4d c5d c6d c
 global @inline log_fast_kernel(x::Float32) = @horner x c1f c2f c3f c4f c5f
 
 function log_fast(d::T) where {T<:IEEEFloat}
-    e  = ilogbk(d * T(1.0/0.75))
-    m  = ldexpk(d, -e)
+    o = d < realmin(T)
+    o && (d *= T(1 << 32) * T(1 << 32))
+
+    e  = ilogb2k(d * T(1.0/0.75))
+    m  = ldexp3k(d, -e)
+
+    o && (e -= 64)
 
     x  = (m - 1) / (m + 1)
     x2 = x * x
@@ -150,7 +157,7 @@ function log_fast(d::T) where {T<:IEEEFloat}
     x  = x * t + T(MLN2) * e
     
     isinf(d) && (x = T(Inf))
-    d < 0 && (x = T(NaN))
+    (d < 0 || isnan(d)) && (x = T(NaN))
     d == 0 && (x = -T(Inf))
 
     return x

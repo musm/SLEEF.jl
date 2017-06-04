@@ -15,7 +15,7 @@ function pow(x::T, y::T) where {T<:IEEEFloat}
     result *= (x > 0 ? T(1.0) : (!yisint ? T(NaN) : (yisodd ? -T(1.0) : T(1.0))))
 
     efx = flipsign(abs(x) - 1, y)
-    isinf(y) && (result = efx < 0 ? T(0) : (efx == 0 ? T(1.0) : T(Inf)))
+    isinf(y) && (result = efx < 0 ? T(0.0) : (efx == 0 ? T(1.0) : T(Inf)))
     (isinf(x) || x == 0) && (result = (yisodd ? _sign(x) : T(1.0)) * ((x == 0 ? -y : y) < 0 ? T(0.0) : T(Inf)))
     (isnan(x) || isnan(y)) && (result = T(NaN))
     (y == 0 || x == 1) && (result = T(1.0))
