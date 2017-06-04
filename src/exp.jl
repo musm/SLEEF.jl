@@ -8,9 +8,8 @@ Computes `a × 2^n`
 ldexp(x::IEEEFloat, q::Int) = ldexpk(x, q)
 
 
-
-const over_e2(::Type{Float64}) = 1024
-const over_e2(::Type{Float32}) = 128f0
+const max_exp2(::Type{Float64}) = 1024
+const max_exp2(::Type{Float32}) = 128f0
 
 """
     exp2(x)
@@ -19,15 +18,14 @@ Compute the base-`2` exponential of `x`, that is `2ˣ`.
 """
 function exp2(x::T) where {T<:IEEEFloat}
     u = expk(dmul(MDLN2(T), x))
-    x > over_e2(T) && (u = T(Inf))
+    x > max_exp2(T) && (u = T(Inf))
     isninf(x) && (u = T(0.0))
     return u
 end
 
 
-
-const over_e10(::Type{Float64}) = 3.08254715559916743851e2 # log 2^1023*(2-2^-52)
-const over_e10(::Type{Float32}) = 38.531839419103626f0 # log 2^127 *(2-2^-23) 
+const max_exp10(::Type{Float64}) = 3.08254715559916743851e2 # log 2^1023*(2-2^-52)
+const max_exp10(::Type{Float32}) = 38.531839419103626f0 # log 2^127 *(2-2^-23) 
 
 """
     exp10(x)
@@ -36,18 +34,17 @@ Compute the base-`10` exponential of `x`, that is `10ˣ`.
 """
 function exp10(x::T) where {T<:IEEEFloat}
     u = expk(dmul(MDLN10(T), x))
-    x > over_e10(T) && (u = T(Inf))
+    x > max_exp10(T) && (u = T(Inf))
     isninf(x) && (u = T(0.0))
     return u
 end
 
 
+const max_expm1(::Type{Float64}) = 7.09782712893383996732e2 # log 2^1023*(2-2^-52)
+const max_expm1(::Type{Float32}) = 88.72283905206835f0 # log 2^127 *(2-2^-23)
 
-const over_em1(::Type{Float64}) = 7.09782712893383996732e2 # log 2^1023*(2-2^-52)
-const over_em1(::Type{Float32}) = 88.72283905206835f0 # log 2^127 *(2-2^-23)
-
-const under_em1(::Type{Float64}) = -36.736800569677101399113302437
-const under_em1(::Type{Float32}) = -16.635532333438687426013570f0
+const min_expm1(::Type{Float64}) = -37.42994775023704434602223
+const min_expm1(::Type{Float32}) = -17.3286790847778338076068394f0
 
 """
     expm1(x)
@@ -56,17 +53,17 @@ Compute `eˣ- 1` accurately for small values of `x`.
 """
 function expm1(x::T) where {T<:IEEEFloat}
     u = T(dadd2(expk2(Double(x)), -T(1.0)))
-    x > over_em1(T) && (u = T(Inf))
-    x < under_em1(T) && (u = -T(1.0))
+    x > max_expm1(T) && (u = T(Inf))
+    x < min_expm1(T) && (u = -T(1.0))
     isnegzero(x) && (u = T(-0.0))
     return u
 end
 
-const over_e(::Type{Float64}) = 709.78271114955742909217217426
-const over_e(::Type{Float32}) = 104f0
+const max_exp(::Type{Float64}) = 709.78271114955742909217217426  # log 2^1023*(2-2^-52)
+const max_exp(::Type{Float32}) = 88.72283905206835f0             # log 2^127 *(2-2^-23)
 
-const under_e(::Type{Float64}) = -1000.0
-const under_e(::Type{Float32}) = -104f0
+const min_exp(::Type{Float64}) = -7.451332191019412076235e2 # log 2^-1075
+const min_exp(::Type{Float32}) = -103.97208f0               # ≈ log 2^-150
 
 """
     exp(x)
@@ -110,8 +107,8 @@ function exp(d::T) where {T<:IEEEFloat}
     u = s * s * u + s + 1
     u = ldexp2k(u, q)
 
-    d < under_e(T) && (u = T(0))
-    d > over_e(T) && (u = T(Inf))
+    d < min_exp(T) && (u = T(0))
+    d > max_exp(T) && (u = T(Inf))
 
     return u
 end

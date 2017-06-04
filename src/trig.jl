@@ -778,7 +778,7 @@ const under_atan2(::Type{Float32}) = 2.9387372783541830947f-39
 Compute the inverse tangent of `x/y`, using the signs of both `x` and `y` to determine the quadrant of the return value.
 """
 function atan2(x::T, y::T) where {T<:IEEEFloat}
-    abs(y) < under_atan2(T) && (x *= T(1 << 53); y *= T(1 << 53))
+    abs(y) < under_atan2(T) && (x *= T(Int64(1) << 53); y *= T(Int64(1) << 53))
     r = T(atan2k(Double(abs(x)), Double(y)))
 
     r = flipsign(r, y)

@@ -50,12 +50,13 @@ end
 end
 
 @inline function ldexp3k(x::T, e::Int) where {T<:IEEEFloat}
-    reinterpret(T, reinterpret(Unsigned, x) + (e << significand_bits(T)) % fpinttype(T))
+    reinterpret(T, reinterpret(Unsigned, x) + (Int64(e) << significand_bits(T)) % fpinttype(T))
 end
 
 # threshold values for `ilogbk`
 const threshold_exponent(::Type{Float64}) = 300
 const threshold_exponent(::Type{Float32}) = 64
+
 """
     ilogbk(x::IEEEFloat) -> Int
 
@@ -286,7 +287,7 @@ global @inline logk_kernel(x::Double{Float32}) = dadd2(c1fd, dmul(x, @horner x.h
 
 @inline function logk(d::T) where {T<:IEEEFloat}
     o = d < realmin(T)
-    o && (d *= T(1 << 32) * T(1 << 32))
+    o && (d *= T(Int64(1) << 32) * T(Int64(1) << 32))
 
     e  = ilogb2k(d * T(1.0/0.75))
     m  = ldexp3k(d, -e)
