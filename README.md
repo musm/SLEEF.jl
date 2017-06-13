@@ -21,7 +21,7 @@ A pure Julia port of the [SLEEF math library](https://github.com/shibatch/SLEEF)
 
 If you have not already done so, we recommend building a custom system image by running
 ```julia
-julia> if is_windows(); Pkg.add("WinRPM"); WinRPM.install("gcc"); end
+julia> if is_windows(); Pkg.add("WinRPM"); using WinRPM; WinRPM.install("gcc"); end
 julia> include(joinpath(dirname(JULIA_HOME), "share", "julia", "build_sysimg.jl"))
 julia> build_sysimg(force=true)
 ```
