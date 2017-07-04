@@ -1,6 +1,6 @@
 <div align="center"> <img
 src="https://rawgit.com/musm/SLEEF.jl/master/doc/src/assets/logo.svg"
-alt="SLEEF Logo" width="420"></img> </div>
+alt="SLEEF Logo" width="380"></img> </div>
 
 
 A pure Julia port of the [SLEEF math library](https://github.com/shibatch/SLEEF)
