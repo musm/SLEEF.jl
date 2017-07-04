@@ -58,12 +58,3 @@ accuracy when the argument is within the following range:
 
 - Double (Float64) precision trigonometric functions : `[-1e+14, 1e+14]`
 - Single (Float32) precision trigonometric functions : `[-39000, 39000]`
-
-# Benchmarks
-
-You can benchmark the performance of the SLEEF.jl math library on your machine by running
-
-```julia
-include(joinpath(Pkg.dir("SLEEF"), "benchmark", "benchmark.jl"))
-```
-
