@@ -8,7 +8,7 @@ over_sch(::Type{Float32}) = 89f0
 
 Compute hyperbolic sine of `x`.
 """
-function sinh(x::T) where {T<:IEEEFloat}
+function sinh(x::T) where {T<:Union{Float32,Float64}}
     u = abs(x)
     d = expk2(Double(u))
     d = dsub(d, drec(d))
@@ -27,7 +27,7 @@ end
 
 Compute hyperbolic cosine of `x`.
 """
-function cosh(x::T) where {T<:IEEEFloat}
+function cosh(x::T) where {T<:Union{Float32,Float64}}
     u = abs(x)
     d = expk2(Double(u))
     d = dadd(d, drec(d))
@@ -48,7 +48,7 @@ over_th(::Type{Float32}) = 18.714973875f0
 
 Compute hyperbolic tangent of `x`.
 """
-function tanh(x::T) where {T<:IEEEFloat}
+function tanh(x::T) where {T<:Union{Float32,Float64}}
     u = abs(x)
     d = expk2(Double(u))
     e = drec(d)
@@ -68,7 +68,7 @@ end
 
 Compute the inverse hyperbolic sine of `x`.
 """
-function asinh(x::T) where {T<:IEEEFloat}
+function asinh(x::T) where {T<:Union{Float32,Float64}}
     y = abs(x)
 
     d = y > 1 ? drec(x) : Double(y, T(0.0))
@@ -92,7 +92,7 @@ end
 
 Compute the inverse hyperbolic cosine of `x`.
 """
-function acosh(x::T) where {T<:IEEEFloat}
+function acosh(x::T) where {T<:Union{Float32,Float64}}
     d = logk2(dadd2(dmul(dsqrt(dadd2(x, T(1.0))), dsqrt(dsub2(x, T(1.0)))), x))
     y = T(d)
 
@@ -111,7 +111,7 @@ end
 
 Compute the inverse hyperbolic tangent of `x`.
 """
-function atanh(x::T) where {T<:IEEEFloat}
+function atanh(x::T) where {T<:Union{Float32,Float64}}
     u = abs(x)
     d = logk2(ddiv(dadd2(T(1.0), u), dsub2(T(1.0), u)))
     u = u > T(1.0) ? T(NaN) : (u == T(1.0) ? T(Inf) : T(d) * T(0.5))

@@ -4,7 +4,7 @@
 
 Exponentiation operator, returns `x` raised to the power `y`.
 """
-function pow(x::T, y::T) where {T<:IEEEFloat}
+function pow(x::T, y::T) where {T<:Union{Float32,Float64}}
     yi = unsafe_trunc(Int, y)
     yisint = yi == y
     yisodd = isodd(yi) && yisint
@@ -51,7 +51,7 @@ global @inline cbrt_kernel(x::Float32) = @horner x c1f c2f c3f c4f c5f c6f
 
 Return `x^{1/3}`.
 """
-function cbrt_fast(d::T) where {T<:IEEEFloat}
+function cbrt_fast(d::T) where {T<:Union{Float32,Float64}}
     e  = ilogbk(abs(d)) + 1
     d  = ldexpk(d, -e)
     r  = (e + 6144) % 3
@@ -74,7 +74,7 @@ end
 
 Return `x^{1/3}`. The prefix operator `∛` is equivalent to `cbrt`.
 """
-function cbrt(d::T) where {T<:IEEEFloat}
+function cbrt(d::T) where {T<:Union{Float32,Float64}}
     e  = ilogbk(abs(d)) + 1
     d  = ldexpk(d, -e)
     r  = (e + 6144) % 3
@@ -108,7 +108,7 @@ end
 """
     hypot(x,y)
 
-Compute the hypotenuse `\sqrt{x^2+y^2}` avoiding overflow and underflow.
+Compute the hypotenuse `\\sqrt{x^2+y^2}` avoiding overflow and underflow.
 """
 function hypot(x::T, y::T) where {T<:IEEEFloat}
     x = abs(x)
@@ -117,5 +117,5 @@ function hypot(x::T, y::T) where {T<:IEEEFloat}
        x, y = y, x
     end
     r = (x == 0) ? y : y / x
-    x * sqrt(T(1) + r * r)
+    x * sqrt(T(1.0) + r * r)
 end

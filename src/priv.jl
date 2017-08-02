@@ -27,11 +27,11 @@ end
 @inline split_exponent(::Type{Float32}, q::Int) = _split_exponent(q, UInt(6), UInt(31), UInt(2))
 
 """
-    ldexpk(a::IEEEFloat, n::Int) -> IEEEFloat
+    ldexpk(a, n)
 
 Computes `a × 2^n`.
 """
-@inline function ldexpk(x::T, q::Int) where {T<:IEEEFloat}
+@inline function ldexpk(x::T, q::Int) where {T<:Union{Float32,Float64}}
     bias = exponent_bias(T)
     emax = exponent_raw_max(T)
     m, q = split_exponent(T, q)
@@ -45,11 +45,11 @@ Computes `a × 2^n`.
     x * u
 end
 
-@inline function ldexp2k(x::T, e::Int) where {T<:IEEEFloat}
+@inline function ldexp2k(x::T, e::Int) where {T<:Union{Float32,Float64}}
     x * pow2i(T, e >> 1) * pow2i(T, e - (e >> 1))
 end
 
-@inline function ldexp3k(x::T, e::Int) where {T<:IEEEFloat}
+@inline function ldexp3k(x::T, e::Int) where {T<:Union{Float32,Float64}}
     reinterpret(T, reinterpret(Unsigned, x) + (Int64(e) << significand_bits(T)) % fpinttype(T))
 end
 
@@ -58,7 +58,7 @@ const threshold_exponent(::Type{Float64}) = 300
 const threshold_exponent(::Type{Float32}) = 64
 
 """
-    ilogbk(x::IEEEFloat) -> Int
+    ilogbk(x) -> Int
 
 Returns the integral part of the logarithm of `|x|`, using 2 as base for the logarithm; in other
 words this returns the binary exponent of `x` so that
@@ -67,14 +67,14 @@ words this returns the binary exponent of `x` so that
 
 where `significand ∈ [1, 2)`.
 """
-@inline function ilogbk(d::T) where {T<:IEEEFloat}
+@inline function ilogbk(d::T) where {T<:Union{Float32,Float64}}
     m = d < T(2)^-threshold_exponent(T)
     d = ifelse(m, d * T(2)^threshold_exponent(T), d)
     q = float2integer(d) & exponent_raw_max(T)
     q = ifelse(m, q - (threshold_exponent(T) + exponent_bias(T)), q - exponent_bias(T))
 end
 
-@inline function ilogb2k(d::T) where {T<:IEEEFloat}
+@inline function ilogb2k(d::T) where {T<:Union{Float32,Float64}}
     (float2integer(d) & exponent_raw_max(T)) - exponent_bias(T)
 end
 
@@ -117,7 +117,7 @@ const c1f = -0.333332866430282592773438f0
 global @inline atan2k_fast_kernel(x::Float64) = @horner x c1d c2d c3d c4d c5d c6d c7d c8d c9d c10d c11d c12d c13d c14d c15d c16d c17d c18d c19d c20d
 global @inline atan2k_fast_kernel(x::Float32) = @horner x c1f c2f c3f c4f c5f c6f c7f c8f c9f
 
-@inline function atan2k_fast(y::T, x::T) where {T<:IEEEFloat}
+@inline function atan2k_fast(y::T, x::T) where {T<:Union{Float32,Float64}}
     q = 0
     if x < 0
         x = -x
@@ -139,7 +139,7 @@ end
 global @inline atan2k_kernel(x::Double{Float64}) = @horner x.hi c1d c2d c3d c4d c5d c6d c7d c8d c9d c10d c11d c12d c13d c14d c15d c16d c17d c18d c19d c20d
 global @inline atan2k_kernel(x::Double{Float32}) = dadd(c1f, x.hi * (@horner x.hi c2f c3f c4f c5f c6f c7f c8f c9f))
 
-@inline function atan2k(y::Double{T}, x::Double{T}) where {T<:IEEEFloat}
+@inline function atan2k(y::Double{T}, x::Double{T}) where {T<:Union{Float32,Float64}}
     q = 0
     if x < 0
         x = -x
@@ -193,7 +193,7 @@ global @inline expk_kernel(x::Float32) = @horner x c1f c2f c3f c4f c5f
 global under_expk(::Type{Float64}) = -1000.0
 global under_expk(::Type{Float32}) = -104f0
 
-@inline function expk(d::Double{T}) where {T<:IEEEFloat}
+@inline function expk(d::Double{T}) where {T<:Union{Float32,Float64}}
     q = round(T(d) * T(MLN2E))
 
     s = dadd(d, q * -L2U(T))
@@ -215,7 +215,7 @@ global under_expk(::Type{Float32}) = -104f0
 end
 
 
-@inline function expk2(d::Double{T}) where {T<:IEEEFloat}
+@inline function expk2(d::Double{T}) where {T<:Union{Float32,Float64}}
     q = round(T(d) * T(MLN2E))
 
     s = dadd(d, -q * L2U(T))
@@ -251,7 +251,7 @@ const c1f = 0.666666686534881591796875f0
 global @inline logk2_kernel(x::Float64) = @horner x c1d c2d c3d c4d c5d c6d c7d c8d
 global @inline logk2_kernel(x::Float32) = @horner x c1f c2f c3f c4f
 
-@inline function logk2(d::Double{T}) where {T<:IEEEFloat}
+@inline function logk2(d::Double{T}) where {T<:Union{Float32,Float64}}
     e  = ilogbk(d.hi * T(1.0/0.75))
     m  = scale(d, pow2i(T, -e))
 
@@ -285,7 +285,7 @@ const c1fd = Double(0.66666662693023681640625f0, 3.69183861259614332084311f-9)
 global @inline logk_kernel(x::Double{Float64}) = dadd2(c1dd, dmul(x, @horner x.hi c2d c3d c4d c5d c6d c7d c8d c9d c10d))
 global @inline logk_kernel(x::Double{Float32}) = dadd2(c1fd, dmul(x, @horner x.hi c2f c3f c4f))
 
-@inline function logk(d::T) where {T<:IEEEFloat}
+@inline function logk(d::T) where {T<:Union{Float32,Float64}}
     o = d < realmin(T)
     o && (d *= T(Int64(1) << 32) * T(Int64(1) << 32))
 

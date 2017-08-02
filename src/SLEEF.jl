@@ -108,5 +108,6 @@ for func in (:atan2, :hypot)
         $func(a::Float16, b::Float16) = Float16($func(Float32(a), Float32(b)))
     end
 end
+ldexp(x::Float16, q::Int) = Float16(ldexpk(Float32(x), q))
 
 end

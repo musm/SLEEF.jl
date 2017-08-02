@@ -1,11 +1,11 @@
 # exported exponential functions
 
 """
-    ldexp(a, n::Int) -> IEEEFloat
+    ldexp(a, n)
 
 Computes `a × 2^n`
 """
-ldexp(x::IEEEFloat, q::Int) = ldexpk(x, q)
+ldexp(x::Union{Float32,Float64}, q::Int) = ldexpk(x, q)
 
 
 const max_exp2(::Type{Float64}) = 1024
@@ -16,7 +16,7 @@ const max_exp2(::Type{Float32}) = 128f0
 
 Compute the base-`2` exponential of `x`, that is `2ˣ`.
 """
-function exp2(x::T) where {T<:IEEEFloat}
+function exp2(x::T) where {T<:Union{Float32,Float64}}
     u = expk(dmul(MDLN2(T), x))
     x > max_exp2(T) && (u = T(Inf))
     isninf(x) && (u = T(0.0))
@@ -32,7 +32,7 @@ const max_exp10(::Type{Float32}) = 38.531839419103626f0 # log 2^127 *(2-2^-23)
 
 Compute the base-`10` exponential of `x`, that is `10ˣ`.
 """
-function exp10(x::T) where {T<:IEEEFloat}
+function exp10(x::T) where {T<:Union{Float32,Float64}}
     u = expk(dmul(MDLN10(T), x))
     x > max_exp10(T) && (u = T(Inf))
     isninf(x) && (u = T(0.0))
@@ -51,7 +51,7 @@ const min_expm1(::Type{Float32}) = -17.3286790847778338076068394f0
 
 Compute `eˣ- 1` accurately for small values of `x`.
 """
-function expm1(x::T) where {T<:IEEEFloat}
+function expm1(x::T) where {T<:Union{Float32,Float64}}
     u = T(dadd2(expk2(Double(x)), -T(1.0)))
     x > max_expm1(T) && (u = T(Inf))
     x < min_expm1(T) && (u = -T(1.0))
@@ -97,7 +97,7 @@ const c1f = 0.5f0
 global @inline exp_kernel(x::Float64) = @horner x c1d c2d c3d c4d c5d c6d c7d c8d c9d c10d c11d  
 global @inline exp_kernel(x::Float32) = @horner x c1f c2f c3f c4f c5f c6f
 
-function exp(d::T) where {T<:IEEEFloat}
+function exp(d::T) where {T<:Union{Float32,Float64}}
     q = unsafe_trunc(Int, round(T(MLN2E) * d))
     s = muladd(q, -L2U(T), d)
     s = muladd(q, -L2L(T), s)

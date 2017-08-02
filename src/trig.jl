@@ -701,7 +701,7 @@ end
 
 Compute the inverse tangent of `x`, where the output is in radians.
 """
-function atan(x::T) where {T<:IEEEFloat}
+function atan(x::T) where {T<:Union{Float32,Float64}}
     u = T(atan2k(Double(abs(x)), Double(T(1))))
     isinf(x) && (u = T(PI_2))
     flipsign(u, x)
@@ -749,7 +749,7 @@ const c1f = -0.333331018686294555664062f0
 global @inline _atan_fast(x::Float64) = @horner x c1d c2d c3d c4d c5d c6d c7d c8d c9d c10d c11d c12d c13d c14d c15d c16d c17d c18d c19d
 global @inline _atan_fast(x::Float32) = @horner x c1f c2f c3f c4f c5f c6f c7f c8f
 
-function atan_fast(x::T) where {T<:IEEEFloat}
+function atan_fast(x::T) where {T<:Union{Float32,Float64}}
     q = 0
     if signbit(x)
         x = -x
@@ -777,7 +777,7 @@ const under_atan2(::Type{Float32}) = 2.9387372783541830947f-39
 
 Compute the inverse tangent of `x/y`, using the signs of both `x` and `y` to determine the quadrant of the return value.
 """
-function atan2(x::T, y::T) where {T<:IEEEFloat}
+function atan2(x::T, y::T) where {T<:Union{Float32,Float64}}
     abs(y) < under_atan2(T) && (x *= T(Int64(1) << 53); y *= T(Int64(1) << 53))
     r = T(atan2k(Double(abs(x)), Double(y)))
 
@@ -800,7 +800,7 @@ end
 
 Compute the inverse tangent of `x/y`, using the signs of both `x` and `y` to determine the quadrant of the return value.
 """
-function atan2_fast(x::T, y::T) where {T<:IEEEFloat}
+function atan2_fast(x::T, y::T) where {T<:Union{Float32,Float64}}
     r = atan2k_fast(abs(x), y)
     r = flipsign(r, y)
     if isinf(y) || y == 0
@@ -822,7 +822,7 @@ end
 
 Compute the inverse sine of `x`, where the output is in radians.
 """
-function asin(x::T) where {T<:IEEEFloat}
+function asin(x::T) where {T<:Union{Float32,Float64}}
     d = atan2k(Double(abs(x)), dsqrt(dmul(dadd(T(1), x), dsub(T(1), x))))
     u = T(d)
     abs(x) == 1 && (u = T(PI_2))
@@ -835,7 +835,7 @@ end
 
 Compute the inverse sine of `x`, where the output is in radians.
 """
-function asin_fast(x::T) where {T<:IEEEFloat}
+function asin_fast(x::T) where {T<:Union{Float32,Float64}}
     flipsign(atan2k_fast(abs(x), _sqrt((1 + x) * (1 - x))), x)
 end
 
@@ -846,7 +846,7 @@ end
 
 Compute the inverse cosine of `x`, where the output is in radians.
 """
-function acos(x::T) where {T<:IEEEFloat}
+function acos(x::T) where {T<:Union{Float32,Float64}}
     d = atan2k(dsqrt(dmul(dadd(T(1), x), dsub(T(1), x))), Double(abs(x)))
     d = flipsign(d, x)
     abs(x) == 1 && (d = Double(T(0)))
@@ -860,6 +860,6 @@ end
 
 Compute the inverse cosine of `x`, where the output is in radians.
 """
-function acos_fast(x::T) where {T<:IEEEFloat}
+function acos_fast(x::T) where {T<:Union{Float32,Float64}}
     flipsign(atan2k_fast(_sqrt((1 + x) * (1 - x)), abs(x)), x) + (signbit(x) ? T(M_PI) : T(0))
 end

@@ -19,7 +19,7 @@ where `significand ∈ [1, 2)`.
     * `x = ±Inf`  returns `INT_MAX`
     * `x = NaN`  returns `FP_ILOGBNAN`
 """
-function ilogb(x::T) where {T<:IEEEFloat}
+function ilogb(x::T) where {T<:Union{Float32,Float64}}
     e = ilogbk(abs(x))
     x == 0 && (e = FP_ILOGB0)
     isnan(x) && (e = FP_ILOGBNAN)
@@ -33,7 +33,7 @@ end
 
 Returns the base `10` logarithm of `x`.
 """
-function log10(a::T) where {T<:IEEEFloat}
+function log10(a::T) where {T<:Union{Float32,Float64}}
     x = T(dmul(logk(a), MDLN10E(T)))
 
     isinf(a) && (x = T(Inf))
@@ -49,7 +49,7 @@ end
 
 Returns the base `2` logarithm of `x`.
 """
-function log2(a::T) where {T<:IEEEFloat}
+function log2(a::T) where {T<:Union{Float32,Float64}}
     u = T(dmul(logk(a), MDLN2E(T)))
 
     isinf(a) && (u = T(Inf))
@@ -68,7 +68,7 @@ const over_log1p(::Type{Float32}) = 1f38
 
 Accurately compute the natural logarithm of 1+x.
 """
-function log1p(a::T) where {T<:IEEEFloat}
+function log1p(a::T) where {T<:Union{Float32,Float64}}
     x = T(logk2(dadd2(a, T(1.0))))
 
     a > over_log1p(T) && (x = T(Inf))
@@ -86,7 +86,7 @@ end
 Compute the natural logarithm of `x`. The inverse of the natural logarithm is
 the natural expoenential function `exp(x)`
 """
-function log(d::T) where {T<:IEEEFloat}
+function log(d::T) where {T<:Union{Float32,Float64}}
     x = T(logk(d))
 
     isinf(d) && (x = T(Inf))
@@ -140,7 +140,7 @@ const c1f = 2f0
 global @inline log_fast_kernel(x::Float64) = @horner x c1d c2d c3d c4d c5d c6d c7d c8d
 global @inline log_fast_kernel(x::Float32) = @horner x c1f c2f c3f c4f c5f
 
-function log_fast(d::T) where {T<:IEEEFloat}
+function log_fast(d::T) where {T<:Union{Float32,Float64}}
     o = d < realmin(T)
     o && (d *= T(Int64(1) << 32) * T(Int64(1) << 32))
 
