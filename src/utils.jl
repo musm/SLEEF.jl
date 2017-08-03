@@ -26,5 +26,5 @@ const FMA_FAST = is_fma_fast(Float64) && is_fma_fast(Float32)
 if VERSION < v"0.7-"
     _sqrt(x::T) where {T<:Union{Float32,Float64}} = Base.sqrt_llvm_fast(x)
 else
-    _sqrt(x::T) where {T<:Union{Float32,Float64}} = Base.sqrt_llvm_(x)
+    _sqrt(x::T) where {T<:Union{Float32,Float64}} = Base.sqrt_llvm(x)
 end
