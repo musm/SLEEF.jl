@@ -20,7 +20,7 @@ MRANGE(::Type{Float64}) = 10000000
 MRANGE(::Type{Float32}) = 10000
 IntF(::Type{Float64}) = Int64
 IntF(::Type{Float32}) = Int32
-x_trig{T<:IEEEFloat}(::Type{T}) = begin
+x_trig(::Type{T}) where {T<:IEEEFloat} = begin
     x_trig = T[]
     for i = 1:10000
         s = reinterpret(T, reinterpret(IntF(T), T(pi)/4 * i) - IntF(T)(20))
@@ -34,20 +34,20 @@ x_trig{T<:IEEEFloat}(::Type{T}) = begin
     x_trig = append!(x_trig, -10:0.0002:10)
     x_trig = append!(x_trig, -MRANGE(T):200.1:MRANGE(T))
 end
-x_exp{T<:IEEEFloat}(::Type{T})        = map(T, vcat(-10:0.0002:10, -1000:0.1:1000))
-x_exp2{T<:IEEEFloat}(::Type{T})       = map(T, vcat(-10:0.0002:10, -120:0.023:1000, -1000:0.02:2000))
-x_exp10{T<:IEEEFloat}(::Type{T})      = map(T, vcat(-10:0.0002:10, -35:0.023:1000, -300:0.01:300))
-x_expm1{T<:IEEEFloat}(::Type{T})      = map(T, vcat(-10:0.0002:10, -1000:0.021:1000, -1000:0.023:1000, 10.0.^-(0:0.02:300), -10.0.^-(0:0.02:300), 10.0.^(0:0.021:300), -10.0.^-(0:0.021:300)))
-x_log{T<:IEEEFloat}(::Type{T})        = map(T, vcat(0.0001:0.0001:10, 0.001:0.1:10000, 1.1.^(-1000:1000), 2.1.^(-1000:1000)))
-x_log10{T<:IEEEFloat}(::Type{T})      = map(T, vcat(0.0001:0.0001:10, 0.0001:0.1:10000))
-x_log1p{T<:IEEEFloat}(::Type{T})      = map(T, vcat(0.0001:0.0001:10, 0.0001:0.1:10000, 10.0.^-(0:0.02:300), -10.0.^-(0:0.02:300)))
-x_atrig{T<:IEEEFloat}(::Type{T})      = map(T, vcat(-1:0.00002:1))
-x_atan{T<:IEEEFloat}(::Type{T})       = map(T, vcat(-10:0.0002:10, -10000:0.2:10000, -10000:0.201:10000))
-x_cbrt{T<:IEEEFloat}(::Type{T})       = map(T, vcat(-10000:0.2:10000, 1.1.^(-1000:1000), 2.1.^(-1000:1000)))
-x_trigh{T<:IEEEFloat}(::Type{T})      = map(T, vcat(-10:0.0002:10, -1000:0.02:1000))
-x_asinhatanh{T<:IEEEFloat}(::Type{T}) = map(T, vcat(-10:0.0002:10, -1000:0.02:1000))
-x_acosh{T<:IEEEFloat}(::Type{T})      = map(T, vcat(1:0.0002:10, 1:0.02:1000))
-x_pow{T<:IEEEFloat}(::Type{T}) = begin
+x_exp(::Type{T}) where {T<:IEEEFloat}        = map(T, vcat(-10:0.0002:10, -1000:0.1:1000))
+x_exp2(::Type{T}) where {T<:IEEEFloat}       = map(T, vcat(-10:0.0002:10, -120:0.023:1000, -1000:0.02:2000))
+x_exp10(::Type{T}) where {T<:IEEEFloat}      = map(T, vcat(-10:0.0002:10, -35:0.023:1000, -300:0.01:300))
+x_expm1(::Type{T}) where {T<:IEEEFloat}      = map(T, vcat(-10:0.0002:10, -1000:0.021:1000, -1000:0.023:1000, 10.0.^-(0:0.02:300), -10.0.^-(0:0.02:300), 10.0.^(0:0.021:300), -10.0.^-(0:0.021:300)))
+x_log(::Type{T}) where {T<:IEEEFloat}        = map(T, vcat(0.0001:0.0001:10, 0.001:0.1:10000, 1.1.^(-1000:1000), 2.1.^(-1000:1000)))
+x_log10(::Type{T}) where {T<:IEEEFloat}      = map(T, vcat(0.0001:0.0001:10, 0.0001:0.1:10000))
+x_log1p(::Type{T}) where {T<:IEEEFloat}      = map(T, vcat(0.0001:0.0001:10, 0.0001:0.1:10000, 10.0.^-(0:0.02:300), -10.0.^-(0:0.02:300)))
+x_atrig(::Type{T}) where {T<:IEEEFloat}      = map(T, vcat(-1:0.00002:1))
+x_atan(::Type{T}) where {T<:IEEEFloat}       = map(T, vcat(-10:0.0002:10, -10000:0.2:10000, -10000:0.201:10000))
+x_cbrt(::Type{T}) where {T<:IEEEFloat}       = map(T, vcat(-10000:0.2:10000, 1.1.^(-1000:1000), 2.1.^(-1000:1000)))
+x_trigh(::Type{T}) where {T<:IEEEFloat}      = map(T, vcat(-10:0.0002:10, -1000:0.02:1000))
+x_asinhatanh(::Type{T}) where {T<:IEEEFloat} = map(T, vcat(-10:0.0002:10, -1000:0.02:1000))
+x_acosh(::Type{T}) where {T<:IEEEFloat}      = map(T, vcat(1:0.0002:10, 1:0.02:1000))
+x_pow(::Type{T}) where {T<:IEEEFloat} = begin
     xx1 = map(Tuple{T,T}, [(x,y) for x = -100:0.20:100, y = 0.1:0.20:100])[:]
     xx2 = map(Tuple{T,T}, [(x,y) for x = -100:0.21:100, y = 0.1:0.22:100])[:]
     xx3 = map(Tuple{T,T}, [(x,y) for x = 2.1, y = -1000:0.1:1000])
