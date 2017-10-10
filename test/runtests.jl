@@ -80,7 +80,7 @@ for f in (:sin, :cos, :tan, :asin, :acos, :atan, :asinh, :acosh, :atanh, :log, :
         import Base.$f
         @nowarn function ($f)(x::BigFloat)
             z = BigFloat()
-            ccall($(string(:mpfr_, f), :libmpfr), Int32, (Ptr{BigFloat}, Ptr{BigFloat}, Int32), &z, &x, ROUNDING_MODE[])
+            ccall($(string(:mpfr_, f), :libmpfr), Int32, (Ref{BigFloat}, Ref{BigFloat}, Int32), z, x, ROUNDING_MODE[])
             return z
         end
     end
