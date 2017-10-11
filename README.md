@@ -30,7 +30,7 @@ and then restart `julia`. This will ensure you are taking full advantage of hard
 
 To use  `SLEEF.jl`
 ```julia
-julia> Pkg.clone("https://github.com/JuliaMath/SLEEF.jl.git")
+julia> Pkg.add("SLEEF")
 julia> using SLEEF
 
 julia> SLEEF.exp(3.0)
