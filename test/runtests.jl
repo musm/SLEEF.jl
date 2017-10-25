@@ -1,5 +1,6 @@
 using SLEEF
-using Base.Test
+using Compat
+using Compat.Test
 
 using Base.Math.significand_bits
 
