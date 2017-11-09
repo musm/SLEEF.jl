@@ -50,7 +50,7 @@ end
 end
 
 @inline function ldexp3k(x::T, e::Int) where {T<:Union{Float32,Float64}}
-    if VERSION < v"0.7.0-DEV.1430"
+    @static if VERSION < v"0.7.0-DEV.1430"
         reinterpret(T, reinterpret(Unsigned, x) + (Int64(e) << significand_bits(T)) % fpinttype(T))
     else
         reinterpret(T, reinterpret(Unsigned, x) + (Int64(e) << significand_bits(T)) % uinttype(T))
