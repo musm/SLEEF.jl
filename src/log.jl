@@ -111,35 +111,34 @@ end
 # That being said, since this converges faster when the argument is close to
 # 1, we multiply  `m` by `2` and subtract 1 for the exponent `e` when `m` is
 # less than `sqrt(2)/2`
+
+@inline function log_fast_kernel(x::Float64)
+    c8d = 0.153487338491425068243146
+    c7d = 0.152519917006351951593857
+    c6d = 0.181863266251982985677316
+    c5d = 0.222221366518767365905163
+    c4d = 0.285714294746548025383248
+    c3d = 0.399999999950799600689777
+    c2d = 0.6666666666667778740063
+    c1d = 2.0
+    return @horner x c1d c2d c3d c4d c5d c6d c7d c8d
+end
+
+@inline function log_fast_kernel(x::Float32)
+    c5f = 0.2392828464508056640625f0
+    c4f = 0.28518211841583251953125f0
+    c3f = 0.400005877017974853515625f0
+    c2f = 0.666666686534881591796875f0
+    c1f = 2f0
+    return @horner x c1f c2f c3f c4f c5f
+end
+
 """
     log_fast(x)
 
 Compute the natural logarithm of `x`. The inverse of the natural logarithm is
 the natural expoenential function `exp(x)`
 """
-function log_fast end
-
-let
-global log_fast
-
-c8d = 0.153487338491425068243146
-c7d = 0.152519917006351951593857
-c6d = 0.181863266251982985677316
-c5d = 0.222221366518767365905163
-c4d = 0.285714294746548025383248
-c3d = 0.399999999950799600689777
-c2d = 0.6666666666667778740063
-c1d = 2.0
-
-c5f = 0.2392828464508056640625f0
-c4f = 0.28518211841583251953125f0
-c3f = 0.400005877017974853515625f0
-c2f = 0.666666686534881591796875f0
-c1f = 2f0
-
-global @inline log_fast_kernel(x::Float64) = @horner x c1d c2d c3d c4d c5d c6d c7d c8d
-global @inline log_fast_kernel(x::Float32) = @horner x c1f c2f c3f c4f c5f
-
 function log_fast(d::T) where {T<:Union{Float32,Float64}}
     o = d < realmin(T)
     o && (d *= T(Int64(1) << 32) * T(Int64(1) << 32))
@@ -160,5 +159,4 @@ function log_fast(d::T) where {T<:Union{Float32,Float64}}
     d == 0 && (x = -T(Inf))
 
     return x
-end
 end
