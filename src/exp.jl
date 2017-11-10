@@ -11,18 +11,56 @@ ldexp(x::Union{Float32,Float64}, q::Int) = ldexpk(x, q)
 const max_exp2(::Type{Float64}) = 1024
 const max_exp2(::Type{Float32}) = 128f0
 
+const min_exp2(::Type{Float64}) = -1075
+const min_exp2(::Type{Float32}) = -150f0
+
 """
     exp2(x)
 
 Compute the base-`2` exponential of `x`, that is `2ˣ`.
 """
-function exp2(x::T) where {T<:Union{Float32,Float64}}
-    u = expk(dmul(MDLN2(T), x))
-    x > max_exp2(T) && (u = T(Inf))
-    isninf(x) && (u = T(0.0))
+function exp2 end
+
+let
+global exp2
+
+
+c11d = 0.4434359082926529454e-9
+c10d = 0.7073164598085707425e-8
+c9d  = 0.1017819260921760451e-6
+c8d  = 0.1321543872511327615e-5
+c7d  = 0.1525273353517584730e-4
+c6d  = 0.1540353045101147808e-3
+c5d  = 0.1333355814670499073e-2
+c4d  = 0.9618129107597600536e-2
+c3d  = 0.5550410866482046596e-1
+c2d  = 0.2402265069591012214
+c1d  = 0.6931471805599452862
+
+c6f = 0.1535920892f-3
+c5f = 0.1339262701f-2
+c4f = 0.9618384764f-2
+c3f = 0.5550347269f-1
+c2f = 0.2402264476f0
+c1f = 0.6931471825f0
+
+global @inline exp2_kernel(x::Float64) = @horner x c1d c2d c3d c4d c5d c6d c7d c8d c9d c10d c11d
+global @inline exp2_kernel(x::Float32) = @horner x c1f c2f c3f c4f c5f c6f
+
+function exp2(d::T) where {T<:Union{Float32,Float64}}
+    q = unsafe_trunc(Int, round(d))
+    s = d - q
+
+    u = exp2_kernel(s)
+    u = T(dnormalize(dadd(T(1.0), dmul(u,s))))
+
+    u = ldexp2k(u, q)
+
+    d > max_exp2(T) && (u = T(Inf))
+    d < min_exp2(T) && (u = T(0.0))
     return u
 end
-
+end
 
 const max_exp10(::Type{Float64}) = 3.08254715559916743851e2 # log 2^1023*(2-2^-52)
 const max_exp10(::Type{Float32}) = 38.531839419103626f0 # log 2^127 *(2-2^-23) 
