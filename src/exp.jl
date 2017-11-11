@@ -62,15 +62,52 @@ end
 const max_exp10(::Type{Float64}) = 3.08254715559916743851e2 # log 2^1023*(2-2^-52)
 const max_exp10(::Type{Float32}) = 38.531839419103626f0 # log 2^127 *(2-2^-23) 
 
+const min_exp10(::Type{Float64}) = -3.23607245338779784854769e2 # log10 2^-1075
+const min_exp10(::Type{Float32}) = -45.15449934959718f0         # log10 2^-150
+
+@inline function exp10_kernel(x::Float64)
+    c11d = 0.2411463498334267652e-3
+    c10d = 0.1157488415217187375e-2
+    c9d  = 0.5013975546789733659e-2
+    c8d  = 0.1959762320720533080e-1
+    c7d  = 0.6808936399446784138e-1
+    c6d  = 0.2069958494722676234e0
+    c5d  = 0.5393829292058536229e0
+    c4d  = 0.1171255148908541655e1
+    c3d  = 0.2034678592293432953e1
+    c2d  = 0.2650949055239205876e1
+    c1d  = 0.2302585092994045901e1
+    return @horner x c1d c2d c3d c4d c5d c6d c7d c8d c9d c10d c11d
+end
+
+@inline function exp10_kernel(x::Float32)
+    c6f = 0.2064004987f0
+    c5f = 0.5417877436f0
+    c4f = 0.1171286821f1
+    c3f = 0.2034656048f1
+    c2f = 0.2650948763f1
+    c1f = 0.2302585125f1
+    return @horner x c1f c2f c3f c4f c5f c6f
+end
+
 """
     exp10(x)
 
 Compute the base-`10` exponential of `x`, that is `10ˣ`.
 """
-function exp10(x::T) where {T<:Union{Float32,Float64}}
-    u = expk(dmul(MDLN10(T), x))
-    x > max_exp10(T) && (u = T(Inf))
-    isninf(x) && (u = T(0.0))
+function exp10(d::T) where {T<:Union{Float32,Float64}}
+    q = unsafe_trunc(Int, round(T(MLOG10_2) * d))
+    s = muladd(q, -L10U(T), d)
+    s = muladd(q, -L10L(T), s)
+
+    u = exp10_kernel(s)
+    u = T(dnormalize(dadd(T(1.0), dmul(u,s))))
+
+    u = ldexp2k(u, q)
+
+    d > max_exp10(T) && (u = T(Inf))
+    d < min_exp10(T) && (u = T(0.0))
+
     return u
 end
 
