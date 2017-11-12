@@ -53,11 +53,11 @@ Return `x^{1/3}`.
 """
 function cbrt_fast(d::T) where {T<:Union{Float32,Float64}}
     e  = ilogbk(abs(d)) + 1
-    d  = ldexpk(d, -e)
+    d  = ldexp2k(d, -e)
     r  = (e + 6144) % 3
     q  = r == 1 ? T(M2P13) : T(1)
     q  = r == 2 ? T(M2P23) : q
-    q  = ldexpk(q, (e + 6144) ÷ 3 - 2048)
+    q  = ldexp2k(q, (e + 6144) ÷ 3 - 2048)
     q  = flipsign(q, d)
     d  = abs(d)
     x  = cbrt_kernel(d)
@@ -76,7 +76,7 @@ Return `x^{1/3}`. The prefix operator `∛` is equivalent to `cbrt`.
 """
 function cbrt(d::T) where {T<:Union{Float32,Float64}}
     e  = ilogbk(abs(d)) + 1
-    d  = ldexpk(d, -e)
+    d  = ldexp2k(d, -e)
     r  = (e + 6144) % 3
     q2 = r == 1 ? MD2P13(T) : Double(T(1))
     q2 = r == 2 ? MD2P23(T) : q2
@@ -96,7 +96,7 @@ function cbrt(d::T) where {T<:Union{Float32,Float64}}
     v  = dadd(dsqu(z), y)
     v  = dmul(v, d)
     v  = dmul(v, q2)
-    z  = ldexpk(T(v), (e + 6144) ÷ 3 - 2048)
+    z  = ldexp2k(T(v), (e + 6144) ÷ 3 - 2048)
     isinf(d) && (z = flipsign(T(Inf), q2.hi))
     d == 0   && (z = flipsign(T(0), q2.hi))
     return z

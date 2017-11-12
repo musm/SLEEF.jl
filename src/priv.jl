@@ -78,6 +78,7 @@ where `significand ∈ [1, 2)`.
     q = ifelse(m, q - (threshold_exponent(T) + exponent_bias(T)), q - exponent_bias(T))
 end
 
+# similar to ilogbk, but argument has to be a normalized float value
 @inline function ilogb2k(d::T) where {T<:Union{Float32,Float64}}
     (float2integer(d) & exponent_raw_max(T)) - exponent_bias(T)
 end
