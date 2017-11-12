@@ -171,6 +171,7 @@ end
 end
 
 
+
 const under_expk(::Type{Float64}) = -1000.0
 const under_expk(::Type{Float32}) = -104f0
 
@@ -201,8 +202,8 @@ end
     q = round(T(d) * T(MLN2E))
     qi = unsafe_trunc(Int, q)
 
-    s = dadd2(d, q * -L2U(T))
-    s = dadd2(s, q * -L2L(T))
+    s = dadd(d, -q * L2U(T))
+    s = dadd(s, -q * L2L(T))
 
     s = dnormalize(s)
 
@@ -215,6 +216,8 @@ end
     (d.hi < under_expk(T)) && (u = T(0.0))
     return u
 end
+
+
 
 @inline function expk2_kernel(x::Double{Float64})
     c11 = 0.1602472219709932072e-9
@@ -229,7 +232,7 @@ end
     c2  = 0.4166666666666669905e-1
     c1 = 0.1666666666666666574e0
     u = @horner x.hi c2 c3 c4 c5 c6 c7 c8 c9 c10 c11
-    return dadd2(dmul(x, u), c1)
+    return dadd(dmul(x, u), c1)
 end
 
 @inline function  expk2_kernel(x::Double{Float32})
@@ -239,7 +242,7 @@ end
     c2 = 0.4166637361f-1
     c1 = 0.166666659414234244790680580464f0
     u = @horner x.hi c2 c3 c4 c5
-    return dadd2(dmul(x, u), c1)
+    return dadd(dmul(x, u), c1)
 end
 
 @inline function expk2(d::Double{T}) where {T<:Union{Float32,Float64}}
@@ -250,10 +253,10 @@ end
     s = dadd(s, -q * L2L(T))
 
     t = expk2_kernel(s)
-    t = dadd2(dmul(s, t), T(0.5))
-    t = dadd2(s, dmul(dsqu(s), t))
-
+    t = dadd(dmul(s, t), T(0.5))
+    t = dadd(s, dmul(dsqu(s), t))
     t = dadd(T(1.0), t)
+
     t = Double(ldexp2k(t.hi, qi), ldexp2k(t.lo, qi))
 
     (d.hi < under_expk(T)) && (t = Double(T(0.0)))
