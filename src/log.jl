@@ -28,6 +28,7 @@ function ilogb(x::T) where {T<:Union{Float32,Float64}}
 end
 
 
+
 """
     log10(x)
 
@@ -44,6 +45,7 @@ function log10(a::T) where {T<:Union{Float32,Float64}}
 end
 
 
+
 """
     log2(x)
 
@@ -58,6 +60,7 @@ function log2(a::T) where {T<:Union{Float32,Float64}}
 
     return u
 end
+
 
 
 const over_log1p(::Type{Float64}) = 1e307
@@ -80,6 +83,25 @@ function log1p(a::T) where {T<:Union{Float32,Float64}}
 end
 
 
+
+@inline function log_kernel(x::Float64)
+    c7 = 0.1532076988502701353
+    c6 = 0.1525629051003428716
+    c5 = 0.1818605932937785996
+    c4 = 0.2222214519839380009
+    c3 = 0.2857142932794299317
+    c2 = 0.3999999999635251990
+    c1 = 0.6666666666667333541
+    return @horner x c1 c2 c3 c4 c5 c6 c7
+end
+
+@inline function log_kernel(x::Float32)
+    c3 = 0.3027294874f0
+    c2 = 0.3996108174f0
+    c1 = 0.6666694880f0
+    return @horner x c1 c2 c3
+end
+
 """
     log(x)
 
@@ -87,14 +109,31 @@ Compute the natural logarithm of `x`. The inverse of the natural logarithm is
 the natural expoenential function `exp(x)`
 """
 function log(d::T) where {T<:Union{Float32,Float64}}
-    x = T(logk(d))
+    o = d < realmin(T)
+    o && (d *= T(Int64(1) << 32) * T(Int64(1) << 32))
 
-    isinf(d) && (x = T(Inf))
-    (d < 0 || isnan(d)) && (x = T(NaN))
-    d == 0 && (x = -T(Inf))
+    e = ilogb2k(d * T(1.0/0.75))
+    m = ldexp3k(d, -e)
+    o && (e -= 64)
 
-    return x
+    x  = ddiv(dadd2(T(-1.0), m), dadd2(T(1.0), m))
+    x2 = x.hi*x.hi
+
+    t = log_kernel(x2)
+
+    s = dmul(MDLN2(T), T(e))
+    s = dadd(s, scale(x, T(2.0)))
+    s = dadd(s, x2*x.hi*t)
+    r = T(s)
+
+    isinf(d) && (r = T(Inf))
+    (d < 0 || isnan(d)) && (r = T(NaN))
+    d == 0 && (r = -T(Inf))
+
+    return r
 end
+
+
 
 # First we split the argument to its mantissa `m` and integer exponent `e` so
 # that `d = m \times 2^e`, where `m \in [0.5, 1)` then we apply the polynomial
