@@ -174,7 +174,7 @@ end
 const under_expk(::Type{Float64}) = -1000.0
 const under_expk(::Type{Float32}) = -104f0
 
-@inline function  expk_kernel(x::Float64)
+@inline function expk_kernel(x::Float64)
     c10 = 2.51069683420950419527139e-08
     c9  = 2.76286166770270649116855e-07
     c8  = 2.75572496725023574143864e-06
@@ -199,38 +199,65 @@ end
 
 @inline function expk(d::Double{T}) where {T<:Union{Float32,Float64}}
     q = round(T(d) * T(MLN2E))
+    qi = unsafe_trunc(Int, q)
 
-    s = dadd(d, q * -L2U(T))
-    s = dadd(s, q * -L2L(T))
+    s = dadd2(d, q * -L2U(T))
+    s = dadd2(s, q * -L2L(T))
 
     s = dnormalize(s)
 
     u = expk_kernel(T(s))
 
     t = dadd(s, dmul(dsqu(s), u))
-
     t = dadd(T(1.0), t)
-
-    u = ldexpk(T(t), unsafe_trunc(Int, q))
+    u = ldexpk(T(t), qi)
 
     (d.hi < under_expk(T)) && (u = T(0.0))
-
     return u
 end
 
+@inline function expk2_kernel(x::Double{Float64})
+    c11 = 0.1602472219709932072e-9
+    c10  = 0.2092255183563157007e-8
+    c9  = 0.2505230023782644465e-7
+    c8  = 0.2755724800902135303e-6
+    c7  = 0.2755731892386044373e-5
+    c6  = 0.2480158735605815065e-4
+    c5  = 0.1984126984148071858e-3
+    c4  = 0.1388888888886763255e-2
+    c3  = 0.8333333333333347095e-2
+    c2  = 0.4166666666666669905e-1
+    c1 = 0.1666666666666666574e0
+    u = @horner x.hi c2 c3 c4 c5 c6 c7 c8 c9 c10 c11
+    return dadd2(dmul(x, u), c1)
+end
+
+@inline function  expk2_kernel(x::Double{Float32})
+    c5 = 0.1980960224f-3
+    c4 = 0.1394256484f-2
+    c3 = 0.8333456703f-2
+    c2 = 0.4166637361f-1
+    c1 = 0.166666659414234244790680580464f0
+    u = @horner x.hi c2 c3 c4 c5
+    return dadd2(dmul(x, u), c1)
+end
 
 @inline function expk2(d::Double{T}) where {T<:Union{Float32,Float64}}
     q = round(T(d) * T(MLN2E))
+    qi = unsafe_trunc(Int, q)
 
     s = dadd(d, -q * L2U(T))
     s = dadd(s, -q * L2L(T))
 
-    u = expk_kernel(s.hi)
-
-    t = dadd(s, dmul(dsqu(s), u))
+    t = expk2_kernel(s)
+    t = dadd2(dmul(s, t), T(0.5))
+    t = dadd2(s, dmul(dsqu(s), t))
 
     t = dadd(T(1.0), t)
-    return scale(scale(t, T(2.0)), pow2i(T, unsafe_trunc(Int, q - 1)))
+    t = Double(ldexp2k(t.hi, qi), ldexp2k(t.lo, qi))
+
+    (d.hi < under_expk(T)) && (t = Double(T(0.0)))
+    return t
 end
 
 
