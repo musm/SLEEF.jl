@@ -45,13 +45,15 @@ end
 Compute the base-`2` exponential of `x`, that is `2ˣ`.
 """
 function exp2(d::T) where {T<:Union{Float32,Float64}}
-    q = unsafe_trunc(Int, round(d))
+    q = round(d)
+    qi = unsafe_trunc(Int, q)
+
     s = d - q
 
     u = exp2_kernel(s)
     u = T(dnormalize(dadd(T(1.0), dmul(u,s))))
 
-    u = ldexp2k(u, q)
+    u = ldexp2k(u, qi)
 
     d > max_exp2(T) && (u = T(Inf))
     d < min_exp2(T) && (u = T(0.0))
@@ -96,14 +98,16 @@ end
 Compute the base-`10` exponential of `x`, that is `10ˣ`.
 """
 function exp10(d::T) where {T<:Union{Float32,Float64}}
-    q = unsafe_trunc(Int, round(T(MLOG10_2) * d))
+    q = round(T(MLOG10_2) * d)
+    qi = unsafe_trunc(Int, q)
+
     s = muladd(q, -L10U(T), d)
     s = muladd(q, -L10L(T), s)
 
     u = exp10_kernel(s)
     u = T(dnormalize(dadd(T(1.0), dmul(u,s))))
 
-    u = ldexp2k(u, q)
+    u = ldexp2k(u, qi)
 
     d > max_exp10(T) && (u = T(Inf))
     d < min_exp10(T) && (u = T(0.0))
@@ -169,14 +173,16 @@ end
 Compute the base-`e` exponential of `x`, that is `eˣ`.
 """
 function exp(d::T) where {T<:Union{Float32,Float64}}
-    q = unsafe_trunc(Int, round(T(MLN2E) * d))
+    q = round(T(MLN2E) * d)
+    qi = unsafe_trunc(Int, q)
+
     s = muladd(q, -L2U(T), d)
     s = muladd(q, -L2L(T), s)
 
     u = exp_kernel(s)
 
     u = s * s * u + s + 1
-    u = ldexp2k(u, q)
+    u = ldexp2k(u, qi)
 
     d > max_exp(T) && (u = T(Inf))
     d < min_exp(T) && (u = T(0))
