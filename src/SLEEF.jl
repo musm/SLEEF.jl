@@ -11,9 +11,9 @@ module SLEEF
 using Base.Math: @horner, exponent_bias, exponent_mask, significand_bits, IEEEFloat, exponent_raw_max
 
 if VERSION < v"0.7.0-DEV.1430"
-    using Base.Math.fpinttype
+    using Base.Math: fpinttype
 else
-    using Base.uinttype
+    using Base: uinttype
 end
 ## constants
 

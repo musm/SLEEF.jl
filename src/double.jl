@@ -6,7 +6,7 @@ struct Double{T<:IEEEFloat} <: Number
 end
 Double(x::T) where {T<:IEEEFloat} = Double(x, zero(T))
 
-convert(::Type{T}, x::Double{T}) where {T<:IEEEFloat} = x.hi + x.lo
+(::Type{T})(x::Double{T}) where {T<:IEEEFloat} = x.hi + x.lo
 
 
 @inline trunclo(x::Float64) = reinterpret(Float64, reinterpret(UInt64, x) & 0xffff_ffff_f800_0000) # clear lower 27 bits (leave upper 26 bits)
