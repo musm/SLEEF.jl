@@ -23,8 +23,4 @@ const FMA_FAST = is_fma_fast(Float64) && is_fma_fast(Float32)
 @inline pow2i(::Type{T}, q::Int) where {T<:Union{Float32,Float64}} = integer2float(T, q + exponent_bias(T))
 
 # sqrt without the domain checks which we don't need since we handle the checks ourselves
-if VERSION < v"0.7-"
-    _sqrt(x::T) where {T<:Union{Float32,Float64}} = Base.sqrt_llvm_fast(x)
-else
-    _sqrt(x::T) where {T<:Union{Float32,Float64}} = Base.sqrt_llvm(x)
-end
+_sqrt(x::T) where {T<:Union{Float32,Float64}} = Base.sqrt_llvm(x)
