@@ -111,17 +111,17 @@ end
 println("Running micro benchmarks...")
 results = run(suite; verbose=VERBOSE, seconds = 2)
 
-print_with_color(:blue, "Benchmarks: median ratio SLEEF/Base\n")
+printstyled("Benchmarks: median ratio SLEEF/Base\n", color=:blue)
 for f in keys(micros)
-    print_with_color(:magenta, string(f))
+    printstyled(string(f), color=:magenta)
     for T in test_types
         println()
         print("time: ", )
         tratio = ratio(median(results["SLEEF"][f][string(T)]), median(results["Base"][f][string(T)])).time
         tcolor = tratio > 3 ? :red : tratio < 1.5 ? :green : :blue
-        print_with_color(tcolor, @sprintf("%.2f",tratio), " ", string(T))
+        printstyled(@sprintf("%.2f",tratio), " ", string(T), color=tcolor)
         if DETAILS
-            print_with_color(:blue, "details SLEEF/Base\n")
+            printstyled("details SLEEF/Base\n", color=:blue)
             println(results["SLEEF"][f][string(T)])
             println(results["Base"][f][string(T)])
             println()
