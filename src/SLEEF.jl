@@ -1,20 +1,13 @@
-__precompile__()
-
 module SLEEF
 
-# export sin, cos, tan, asin, acos, atan, atan2, sincos, sinh, cosh, tanh,
+# export sin, cos, tan, asin, acos, atan, sincos, sinh, cosh, tanh,
 #     asinh, acosh, atanh, log, log2, log10, log1p, ilogb, exp, exp2, exp10, expm1, ldexp, cbrt, pow
 
 # fast variants (within 3 ulp)
 # export sin_fast, cos_fast, tan_fast, sincos_fast, asin_fast, acos_fast, atan_fast, atan2_fast, log_fast, cbrt_fast
 
-using Base.Math: @horner, exponent_bias, exponent_mask, significand_bits, IEEEFloat, exponent_raw_max
+using Base.Math: uinttype, @horner, exponent_bias, exponent_mask, significand_bits, IEEEFloat, exponent_raw_max
 
-if VERSION < v"0.7.0-DEV.1430"
-    using Base.Math: fpinttype
-else
-    using Base: uinttype
-end
 ## constants
 
 const MLN2  = 6.931471805599453094172321214581765680755001343602552541206800094933936219696955e-01 # log(2)
@@ -113,7 +106,7 @@ for func in (:sin, :cos, :tan, :asin, :acos, :atan, :sinh, :cosh, :tanh,
     end
 end
 
-for func in (:atan2, :hypot)
+for func in (:atan, :hypot)
     @eval begin
         $func(y::Real, x::Real) = $func(promote(float(y), float(x))...)
         $func(a::Float16, b::Float16) = Float16($func(Float32(a), Float32(b)))

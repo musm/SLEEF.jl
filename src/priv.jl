@@ -50,11 +50,7 @@ end
 end
 
 @inline function ldexp3k(x::T, e::Int) where {T<:Union{Float32,Float64}}
-    @static if VERSION < v"0.7.0-DEV.1430"
-        reinterpret(T, reinterpret(Unsigned, x) + (Int64(e) << significand_bits(T)) % fpinttype(T))
-    else
-        reinterpret(T, reinterpret(Unsigned, x) + (Int64(e) << significand_bits(T)) % uinttype(T))
-    end
+    reinterpret(T, reinterpret(Unsigned, x) + (Int64(e) << significand_bits(T)) % uinttype(T))
 end
 
 # threshold values for `ilogbk`
@@ -325,7 +321,7 @@ end
 end
 
 @inline function logk(d::T) where {T<:Union{Float32,Float64}}
-    o = d < realmin(T)
+    o = d < floatmin(T)
     o && (d *= T(Int64(1) << 32) * T(Int64(1) << 32))
 
     e  = ilogb2k(d * T(1.0/0.75))

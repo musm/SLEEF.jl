@@ -109,7 +109,7 @@ Compute the natural logarithm of `x`. The inverse of the natural logarithm is
 the natural expoenential function `exp(x)`
 """
 function log(d::T) where {T<:Union{Float32,Float64}}
-    o = d < realmin(T)
+    o = d < floatmin(T)
     o && (d *= T(Int64(1) << 32) * T(Int64(1) << 32))
 
     e = ilogb2k(d * T(1.0/0.75))
@@ -179,7 +179,7 @@ Compute the natural logarithm of `x`. The inverse of the natural logarithm is
 the natural expoenential function `exp(x)`
 """
 function log_fast(d::T) where {T<:Union{Float32,Float64}}
-    o = d < realmin(T)
+    o = d < floatmin(T)
     o && (d *= T(Int64(1) << 32) * T(Int64(1) << 32))
 
     e = ilogb2k(d * T(1.0/0.75))

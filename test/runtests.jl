@@ -1,8 +1,8 @@
 using SLEEF
-using Compat
-using Compat.Test
+using Test
+using Printf
 
-using Base.Math.significand_bits
+using Base.Math: significand_bits
 
 isnzero(x::T) where {T <: AbstractFloat} = signbit(x)
 ispzero(x::T) where {T <: AbstractFloat} = !signbit(x)
@@ -63,19 +63,19 @@ countulp(x::T, y::T) where {T <: AbstractFloat} = countulp(T, x, y)
 # get rid off annoying warnings from overwritten function
 macro nowarn(expr)
     quote
-        stderr = STDERR
+        _stderr = stderr
         tmp = tempname()
         stream = open(tmp, "w")
         redirect_stderr(stream)
         result = $(esc(expr))
-        redirect_stderr(stderr)
+        redirect_stderr(_stderr)
         close(stream)
         result
     end
 end
 
 # overide domain checking that base adheres to
-using Base.MPFR.ROUNDING_MODE
+using Base.MPFR: ROUNDING_MODE
 for f in (:sin, :cos, :tan, :asin, :acos, :atan, :asinh, :acosh, :atanh, :log, :log10, :log2, :log1p)
     @eval begin
         import Base.$f
@@ -111,7 +111,7 @@ function test_acc(T, fun_table, xx, tol; debug = false, tol_debug = 5)
         end
         rmean = rmean / length(xx)
 
-        t = @test trunc(rmax, 1) <= tol
+        t = @test trunc(rmax, digits=1) <= tol
 
         fmtxloc = isa(xmax, Tuple) ? string('(', join((@sprintf("%.5f", x) for x in xmax), ", "), ')') : @sprintf("%.5f", xmax)
         println(rpad(strip_module_name(xfun), 18, " "), ": max ", @sprintf("%f", rmax),
