@@ -1,87 +1,87 @@
 @testset "exceptional $T" for T in (Float32, Float64)
 
-@testset "exceptional $xatan2" for xatan2 in (SLEEF.atan2_fast, SLEEF.atan2)
+@testset "exceptional $xatan" for xatan in (SLEEF.atan_fast, SLEEF.atan)
 
-    @test xatan2(T(0.0),  T(-0.0)) === T(pi)
-    @test xatan2(T(-0.0), T(-0.0)) === -T(pi)
-    @test ispzero(xatan2(T(0.0), T(0.0)))
-    @test isnzero(xatan2(T(-0.0), T(0.0)))
-    @test xatan2( T(Inf), -T(Inf)) === T(3*pi/4)
-    @test xatan2(-T(Inf), -T(Inf)) === T(-3*pi/4)
-    @test xatan2( T(Inf),  T(Inf))  === T(pi/4)
-    @test xatan2(-T(Inf),  T(Inf))  === T(-pi/4)
+    @test xatan(T(0.0),  T(-0.0)) === T(pi)
+    @test xatan(T(-0.0), T(-0.0)) === -T(pi)
+    @test ispzero(xatan(T(0.0), T(0.0)))
+    @test isnzero(xatan(T(-0.0), T(0.0)))
+    @test xatan( T(Inf), -T(Inf)) === T(3*pi/4)
+    @test xatan(-T(Inf), -T(Inf)) === T(-3*pi/4)
+    @test xatan( T(Inf),  T(Inf))  === T(pi/4)
+    @test xatan(-T(Inf),  T(Inf))  === T(-pi/4)
 
 
     y = T(0.0)
     xa = T[-100000.5, -100000, -3, -2.5, -2, -1.5, -1.0, -0.5]
     for x in xa
-        @test xatan2(y,x) === T(pi)
+        @test xatan(y,x) === T(pi)
     end
 
 
     y = T(-0.0)
     xa = T[-100000.5, -100000, -3, -2.5, -2, -1.5, -1.0, -0.5]
     for x in xa
-        @test xatan2(y,x) === T(-pi)
+        @test xatan(y,x) === T(-pi)
     end
 
 
     ya = T[-100000.5, -100000, -3, -2.5, -2, -1.5, -1.0, -0.5]
     xa = T[T(0.0), T(-0.0)]
     for x in xa, y in ya
-        @test xatan2(y,x) === T(-pi/2)
+        @test xatan(y,x) === T(-pi/2)
     end
 
 
     ya = T[100000.5, 100000, 3, 2.5, 2, 1.5, 1.0, 0.5]
     xa = T[T(0.0), T(-0.0)]
     for x in xa, y in ya
-        @test xatan2(y,x) === T(pi/2)
+        @test xatan(y,x) === T(pi/2)
     end
 
 
     y = T(Inf)
     xa = T[-100000.5, -100000, -3, -2.5, -2, -1.5, -1.0, -0.5, -0.0, +0.0, 0.5, 1.5, 2.0, 2.5, 3.0, 100000, 100000.5]
     for x in xa
-        @test xatan2(y,x) === T(pi/2)
+        @test xatan(y,x) === T(pi/2)
     end
 
 
     y = T(-Inf)
     xa = T[-100000.5, -100000, -3, -2.5, -2, -1.5, -1.0, -0.5, -0.0, +0.0, 0.5, 1.5, 2.0, 2.5, 3.0, 100000, 100000.5]
     for x in xa
-        @test xatan2(y,x) === T(-pi/2)
+        @test xatan(y,x) === T(-pi/2)
     end
 
 
     ya = T[0.5, 1.5, 2.0, 2.5, 3.0, 100000, 100000.5]
     x = T(Inf)
     for y in ya
-        @test ispzero(xatan2(y,x))
+        @test ispzero(xatan(y,x))
     end
 
 
     ya = T[-0.5, -1.5, -2.0, -2.5, -3.0, -100000, -100000.5]
     x = T(Inf)
     for y in ya
-        @test isnzero(xatan2(y,x))
+        @test isnzero(xatan(y,x))
     end
 
 
     ya = T[-100000.5, -100000, -3, -2.5, -2, -1.5, -1.0, -0.5, -0.0, +0.0, 0.5, 1.5, 2.0, 2.5, 3.0, 100000, 100000.5, NaN]
     x = T(NaN)
     for y in ya
-        @test isnan(xatan2(y,x))
+        @test isnan(xatan(y,x))
     end
 
 
     y = T(NaN)
     xa = T[-100000.5, -100000, -3, -2.5, -2, -1.5, -1.0, -0.5, -0.0, +0.0, 0.5, 1.5, 2.0, 2.5, 3.0, 100000, 100000.5, NaN]
     for x in xa
-        @test isnan(xatan2(y,x))
+        @test isnan(xatan(y,x))
     end
 
-end # denormal/nonumber atan2
+end # denormal/nonumber atan
 
 
 @testset "exceptional xpow" begin

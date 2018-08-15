@@ -325,7 +325,7 @@ end
 end
 
 @inline function logk(d::T) where {T<:Union{Float32,Float64}}
-    o = d < realmin(T)
+    o = d < floatmin(T)
     o && (d *= T(Int64(1) << 32) * T(Int64(1) << 32))
 
     e  = ilogb2k(d * T(1.0/0.75))

@@ -42,7 +42,7 @@ julia> SLEEF.exp(3f0)
 
 The available functions include (within 1 ulp)
 ```julia
-sin, cos, tan, asin, acos, atan, atan2, sincos, sinh, cosh, tanh,
+sin, cos, tan, asin, acos, atan, sincos, sinh, cosh, tanh,
     asinh, acosh, atanh, log, log2, log10, log1p, ilogb, exp, exp2, exp10, expm1, ldexp, cbrt, pow
  ```
 

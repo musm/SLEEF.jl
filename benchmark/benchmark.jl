@@ -1,6 +1,7 @@
 using SLEEF
 using BenchmarkTools
 using JLD, DataStructures
+using Printf
 
 const RETUNE  = false
 const VERBOSE = true

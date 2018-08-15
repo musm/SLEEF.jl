@@ -48,15 +48,14 @@ IntF(::Type{Float32}) = Int32
     tol = 4
     test_acc(T, fun_table, xx, tol)
 
-
-    sin_sincos_fast(x) = SLEEF.sincos_fast(x)[1]
-    cos_sincos_fast(x) = SLEEF.sincos_fast(x)[2]
+    global sin_sincos_fast(x) = (SLEEF.sincos_fast(x))[1]
+    global cos_sincos_fast(x) = (SLEEF.sincos_fast(x))[2]
     fun_table = Dict(sin_sincos_fast => Base.sin, cos_sincos_fast => Base.cos)
     tol = 4
     test_acc(T, fun_table, xx, tol) 
 
-    sin_sincos(x) = SLEEF.sincos(x)[1]
-    cos_sincos(x) = SLEEF.sincos(x)[2]
+    global sin_sincos(x) = (SLEEF.sincos(x))[1]
+    global cos_sincos(x) = (SLEEF.sincos(x))[2]
     fun_table = Dict(sin_sincos => Base.sin, cos_sincos => Base.cos)
     tol = 1
     test_acc(T, fun_table, xx, tol) 
@@ -88,11 +87,11 @@ IntF(::Type{Float32}) = Int32
     xx4 = map(Tuple{T,T}, [zip(-100:0.51:100, -100:0.52:100)...])
     xx = vcat(xx1, xx2, xx3, xx4)
 
-    fun_table = Dict(SLEEF.atan2_fast => Base.atan2)
+    fun_table = Dict(SLEEF.atan_fast => Base.atan)
     tol = 2.5
     test_acc(T, fun_table, xx, tol)
 
-    fun_table = Dict(SLEEF.atan2 => Base.atan2)
+    fun_table = Dict(SLEEF.atan => Base.atan)
     tol = 1
     test_acc(T, fun_table, xx, tol)
 
