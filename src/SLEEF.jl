@@ -97,11 +97,11 @@ include("misc.jl")   # miscallenous math functions including pow and cbrt
 
 # fallback definitions
 
-for func in (:sin, :cos, :tan, :asin, :acos, :atan, :sinh, :cosh, :tanh,
+for func in (:sin, :cos, :tan, :sincos, :asin, :acos, :atan, :sinh, :cosh, :tanh,
              :asinh, :acosh, :atanh, :log, :log2, :log10, :log1p, :exp, :exp2, :exp10, :expm1, :cbrt,
              :sin_fast, :cos_fast, :tan_fast, :sincos_fast, :asin_fast, :acos_fast, :atan_fast, :atan2_fast, :log_fast, :cbrt_fast)
     @eval begin
-        $func(a::Float16) = Float16($func(Float32(a)))
+        $func(a::Float16) = Float16.($func(Float32(a)))
         $func(x::Real) = $func(float(x))
     end
 end
