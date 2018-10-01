@@ -21,7 +21,7 @@ A pure Julia port of the [SLEEF math library](https://github.com/shibatch/SLEEF)
 
 To use  `SLEEF.jl`
 ```julia
-julia> Pkg.add("SLEEF")
+pkg> add SLEEF
 julia> using SLEEF
 
 julia> SLEEF.exp(3.0)
