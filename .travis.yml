@@ -1,4 +1,3 @@
-# Documentation: http://docs.travis-ci.com/user/languages/julia/
 language: julia
 os:
   - linux
@@ -7,8 +6,10 @@ julia:
   - 0.7
   - 1.0
   - nightly
+matrix:
+  allow_failures:
+  - julia: nightly
 notifications:
   email: false
-after_success:
-  # push coverage results
-  - julia -e 'cd(Pkg.dir("SLEEF")); Pkg.add("Coverage"); using Coverage; Coveralls.submit(Coveralls.process_folder()); Codecov.submit(Codecov.process_folder())'
+coveralls: true
+codecov: true
