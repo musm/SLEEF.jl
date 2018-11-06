@@ -9,6 +9,5 @@ julia:
   - nightly
 notifications:
   email: false
-after_success:
-  # push coverage results
-  - julia -e 'import Pkg; Pkg.add("SLEEF"); using Coverage; Codecov.submit(Codecov.process_folder()); Coveralls.submit(Coveralls.process_folder())'
+coveralls: true
+codecov: true
