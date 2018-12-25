@@ -51,7 +51,7 @@ end
     x * pow2i(eltype(x), e >> 1) * pow2i(eltype(x), e - (e >> 1))
 end
 
-@inline function ldexp3k(x::T, e::Int) where {T<:Union{Float32,Float64}}
+@inline function ldexp3k(x::T, e::Integer) where {T<:Union{Float32,Float64}}
     reinterpret(T, reinterpret(Unsigned, x) + (Int64(e) << significand_bits(T)) % uinttype(T))
 end
 @generated function ldexp3k(x::Vec{N,T}, e::IntegerType) where {N,T<:Union{Float32,Float64}}
@@ -89,7 +89,7 @@ end
 # similar to ilogbk, but argument has to be a normalized float value
 @inline function ilogb2k(d::FloatType)
     T = eltype(d)
-    I = EquivalentInteger(T)
+    I = Int == Int32 ? Int32 : EquivalentInteger(T)
     (float2integer(d) & I(exponent_raw_max(T))) - I(exponent_bias(T))
 end
 
