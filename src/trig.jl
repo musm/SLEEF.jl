@@ -14,7 +14,7 @@ Compute the cosine of `x`, where the output is in radians.
 """
 function cos end
 
-@inline function sincos_kernel(x::Double{Float64})
+@inline function sincos_kernel(x::Double{<:FloatType64})
     c8 =  2.72052416138529567917983e-15
     c7 = -7.64292594113954471900203e-13
     c6 =  1.60589370117277896211623e-10
@@ -26,7 +26,7 @@ function cos end
     return dadd(c1, x.hi * (@horner x.hi c2 c3 c4 c5 c6 c7 c8))
 end
 
-@inline function sincos_kernel(x::Double{Float32})
+@inline function sincos_kernel(x::Double{<:FloatType32})
     c4 =  2.6083159809786593541503f-06
     c3 = -0.0001981069071916863322258f0
     c2 =  0.00833307858556509017944336f0
@@ -34,7 +34,8 @@ end
     return dadd(c1, x.hi * (@horner x.hi c2 c3 c4))
 end
 
-function sin(d::T) where {T<:Float64}
+function sin(d::V) where V <: FloatType64
+    T = eltype(d)
     qh = trunc(d * (T(M_1_PI) / (1 << 24)))
     ql = round(d * T(M_1_PI) - qh * (1 << 24))
 
@@ -51,17 +52,19 @@ function sin(d::T) where {T<:Float64}
 
     w = sincos_kernel(s)
 
-    v = dmul(t, dadd(T(1.0), dmul(w, s)))
-    u = T(v)
+    v = dmul(t, dadd(V(1.0), dmul(w, s)))
+    u = V(v)
 
-    qli = unsafe_trunc(Int, ql)
-    qli & 1 != 0 && (u = -u)
-    !isinf(d) && (isnegzero(d) || abs(d) > TRIG_MAX(T)) && (u = T(-0.0))
+    qli = unsafe_trunc(EquivalentInteger(T), ql)
+    u = vifelse(qli & 1 != 0, -u, u)
+    u = vifelse((!isinf(d)) & (isnegzero(d) | (abs(d) > TRIG_MAX(T))), T(-0.0), u)
 
     return u
 end
 
-function sin(d::T) where {T<:Float32}
+function sin(d::V) where V <: FloatType32
+    T = eltype(d)
+
     q = round(d * T(M_1_PI))
 
     s = dadd2(d, q * -PI_A(T))
@@ -75,16 +78,17 @@ function sin(d::T) where {T<:Float32}
     w = sincos_kernel(s)
 
     v = dmul(t, dadd(T(1.0), dmul(w, s)))
-    u = T(v)
+    u = V(v)
 
-    qi = unsafe_trunc(Int, q)
-    qi & 1 != 0 && (u = -u)
-    !isinf(d) && (isnegzero(d) || abs(d) > TRIG_MAX(T)) && (u = T(-0.0))
+    qi = unsafe_trunc(EquivalentInteger(T), q)
+    u = vifelse(qi & 1 != 0, -u, u)
+    u = vifelse((!isinf(d)) & (isnegzero(d) | (abs(d) > TRIG_MAX(T))), T(-0.0), u)
 
     return u
 end
 
-function cos(d::T) where {T<:Float64}
+function cos(d::V) where V <: FloatType64
+    T = eltype(d)
     d = abs(d)
 
     qh = trunc(d * (T(M_1_PI) / (1 << 23)) - T(0.5) * (T(M_1_PI) / (1 << 23)))
@@ -105,16 +109,17 @@ function cos(d::T) where {T<:Float64}
 
     v = dmul(t, dadd(T(1.0), dmul(w, s)))
 
-    u = T(v)
+    u = V(v)
 
-    qli = unsafe_trunc(Int, ql)
-    qli & 2 == 0 && (u = -u)
-    !isinf(d) && (d > TRIG_MAX(T)) && (u = T(0.0))
+    qli = unsafe_trunc(EquivalentInteger(T), ql)
+    u = vifelse(qli & 2 == 0, -u, u)
+    u = vifelse(!isinf(d) & (d > TRIG_MAX(T)), T(0.0), u)
 
     return u
 end
 
-function cos(d::T) where {T<:Float32}
+function cos(d::V) where V <: FloatType32
+    T = eltype(d)
     d = abs(d)
 
     q = 1 + 2*round(d * T(M_1_PI) - T(0.5))
@@ -131,11 +136,11 @@ function cos(d::T) where {T<:Float32}
 
     v = dmul(t, dadd(T(1.0), dmul(w, s)))
 
-    u = T(v)
+    u = V(v)
 
-    qi = unsafe_trunc(Int, q)
-    qi & 2 == 0 && (u = -u)
-    !isinf(d) && (d > TRIG_MAX(T)) && (u = T(0.0))
+    qi = unsafe_trunc(EquivalentInteger(T), q)
+    u = vifelse(qi & 2 == 0, -u, u)
+    u = vifelse(!isinf(d) & (d > TRIG_MAX(T)), T(0.0), u)
 
     return u
 end
@@ -162,7 +167,7 @@ function cos_fast end
 # we are now in the negative branch of sin(x). Recall that q is just the integer
 # part of d/π and thus we can determine the correct sign using this information.
 
-@inline function sincos_fast_kernel(x::Float64)
+@inline function sincos_fast_kernel(x::FloatType64)
     c9 = -7.97255955009037868891952e-18
     c8 =  2.81009972710863200091251e-15
     c7 = -7.64712219118158833288484e-13
@@ -174,15 +179,16 @@ function cos_fast end
     c1 = -0.166666666666666657414808
     return @horner x c1 c2 c3 c4 c5 c6 c7 c8 c9
 end
-@inline function sincos_fast_kernel(x::Float32)
+@inline function sincos_fast_kernel(x::FloatType32)
     c4 =  2.6083159809786593541503f-06
     c3 = -0.0001981069071916863322258f0
     c2 =  0.00833307858556509017944336f0
-    c1 = -0.166666597127914428710938f0   
+    c1 = -0.166666597127914428710938f0
     return @horner x c1 c2 c3 c4
 end
 
-function sin_fast(d::T) where {T<:Float64}
+function sin_fast(d::FloatType64)
+    T = eltype(d)
     t = d
 
     qh = trunc(d * (T(M_1_PI) / (1 << 24)))
@@ -197,19 +203,20 @@ function sin_fast(d::T) where {T<:Float64}
     d = muladd(qh * (1 << 24) + ql, -PI_D(T), d)
 
     s = d * d
-    
-    qli = unsafe_trunc(Int, ql)
-    qli & 1 != 0 && (d = -d)
-    
+
+    qli = unsafe_trunc(EquivalentInteger(T), ql)
+    d = vifelse(qli & 1 != 0, -d, d)
+
     u = sincos_fast_kernel(s)
     u = muladd(s, u * d, d)
-    
-    !isinf(t) && (isnegzero(t) || abs(t) > TRIG_MAX(T)) && (u = T(-0.0))
+
+    u = vifelse((!isinf(t)) & (isnegzero(t) | (abs(t) > TRIG_MAX(T))), T(-0.0), u)
 
     return u
 end
 
-function sin_fast(d::T) where {T<:Float32}
+function sin_fast(d::FloatType32)
+    T = eltype(d)
     t = d
 
     q = round(d * T(M_1_PI))
@@ -220,25 +227,26 @@ function sin_fast(d::T) where {T<:Float32}
     d = muladd(q , -PI_D(T), d)
 
     s = d * d
-    
-    qli = unsafe_trunc(Int, q)
-    qli & 1 != 0 && (d = -d)
-    
+
+    qli = unsafe_trunc(EquivalentInteger(T), q)
+    d = vifelse(qli & 1 != 0, -d, d)
+
     u = sincos_fast_kernel(s)
 
     u = muladd(s, u * d, d)
-    
-    !isinf(t) && (isnegzero(t) || abs(t) > TRIG_MAX(T)) && (u = T(-0.0))
+
+    u = vifelse((!isinf(t)) & (isnegzero(t) | (abs(t) > TRIG_MAX(T))), T(-0.0), u)
 
     return u
 end
 
-function cos_fast(d::T) where {T<:Float64}
+function cos_fast(d::FloatType64)
+    T = eltype(d)
     t = d
 
     qh = trunc(d * (T(M_1_PI) / (1 << 23)) - T(0.5) * (T(M_1_PI) / (1 << 23)))
     ql = 2*round(d * T(M_1_PI) - T(0.5) - qh * (1 << 23)) + 1
-    
+
     d = muladd(qh , -PI_A(T) * T(0.5) * (1 << 24) , d)
     d = muladd(ql , -PI_A(T) * T(0.5)             , d)
     d = muladd(qh , -PI_B(T) * T(0.5) * (1 << 24) , d)
@@ -249,22 +257,23 @@ function cos_fast(d::T) where {T<:Float64}
 
     s = d * d
 
-    qli = unsafe_trunc(Int, ql)
-    qli & 2 == 0 && (d = -d)
+    qli = unsafe_trunc(EquivalentInteger(T), ql)
+    d = vifelse(qli & 2 == 0, -d, d)
 
     u = sincos_fast_kernel(s)
     u = muladd(s, u * d, d)
 
-    !isinf(t) && (abs(t) > TRIG_MAX(T)) && (u = T(0.0))
+    u = vifelse(!isinf(t) & (abs(t) > TRIG_MAX(T)), T(0.0), u)
 
     return u
 end
 
-function cos_fast(d::T) where {T<:Float32}
+function cos_fast(d::FloatType32)
+    T = eltype(d)
     t = d
 
     q = 1 + 2*round(d * T(M_1_PI) - T(0.5))
-    
+
     d = muladd(q, -PI_A(T) * T(0.5), d)
     d = muladd(q, -PI_B(T) * T(0.5), d)
     d = muladd(q, -PI_C(T) * T(0.5), d)
@@ -272,14 +281,14 @@ function cos_fast(d::T) where {T<:Float32}
 
     s = d * d
 
-    qi = unsafe_trunc(Int, q)
-    qi & 2 == 0 && (d = -d)
+    qi = unsafe_trunc(EquivalentInteger(T), q)
+    d = vifelse(qi & 2 == 0, -d, d)
 
     u = sincos_fast_kernel(s)
 
     u = muladd(s, u * d, d)
 
-    !isinf(t) && (abs(t) > TRIG_MAX(T)) && (u = T(0.0))
+    u = vifelse(!isinf(t) & (abs(t) > TRIG_MAX(T)), T(0.0), u)
 
     return u
 end
@@ -302,7 +311,7 @@ radians, returning a tuple.
 """
 function sincos_fast end
 
-@inline function sincos_a_kernel(x::Float64)
+@inline function sincos_a_kernel(x::FloatType64)
     a6 =  1.58938307283228937328511e-10
     a5 = -2.50506943502539773349318e-08
     a4 =  2.75573131776846360512547e-06
@@ -312,14 +321,14 @@ function sincos_fast end
     return @horner x a1 a2 a3 a4 a5 a6
 end
 
-@inline function sincos_a_kernel(x::Float32)
+@inline function sincos_a_kernel(x::FloatType32)
     a3 = -0.000195169282960705459117889f0
     a2 =  0.00833215750753879547119141f0
     a1 = -0.166666537523269653320312f0
     return @horner x a1 a2 a3
 end
 
-@inline function sincos_b_kernel(x::Float64)
+@inline function sincos_b_kernel(x::FloatType64)
     b7 = -1.13615350239097429531523e-11
     b6 =  2.08757471207040055479366e-09
     b5 = -2.75573144028847567498567e-07
@@ -330,7 +339,7 @@ end
     return @horner x b1 b2 b3 b4 b5 b6 b7
 end
 
-@inline function sincos_b_kernel(x::Float32)
+@inline function sincos_b_kernel(x::FloatType32)
     b5 = -2.71811842367242206819355f-07
     b4 =  2.47990446951007470488548f-05
     b3 = -0.00138888787478208541870117f0
@@ -339,7 +348,8 @@ end
     return @horner x b1 b2 b3 b4 b5
 end
 
-function sincos_fast(d::T) where {T<:Float64}
+function sincos_fast(d::FloatType64)
+    T = eltype(d)
     s = d
 
     qh = trunc(d * ((2 * T(M_1_PI)) / (1 << 24)))
@@ -362,24 +372,32 @@ function sincos_fast(d::T) where {T<:Float64}
 
     rx = t + u
 
-    isnegzero(d) && (rx = T(-0.0))
+    rx = vifelse(isnegzero(d), T(-0.0), rx)
 
     u = sincos_b_kernel(s)
 
-    ry = u * s + T(1.0)
+    ry = muladd(u, s, T(1.0))
 
-    qli = unsafe_trunc(Int, ql)
-    qli & 1 != 0 && (s = ry; ry = rx; rx = s)
-    qli & 2 != 0 && (rx = -rx)
-    (qli + 1) & 2 != 0 && (ry = -ry)
+    qli = unsafe_trunc(EquivalentInteger(T), ql)
+    qli_odd = qli & 1 != 0
+    s = vifelse(qli_odd, ry, s)
+    ry = vifelse(qli_odd, rx, ry)
+    rx = vifelse(qli_odd, s, rx)
+    rx = vifelse(qli & 2 != 0, -rx, rx)
+    ry = vifelse((qli + 1) & 2 != 0, -ry, ry)
 
-    abs(d) > TRIG_MAX(T) && (rx = ry = T(0.0))
-    isinf(d) && (rx = ry = T(NaN))
+    absd_g_trig_max = abs(d) > TRIG_MAX(T)
+    rx = vifelse(absd_g_trig_max, T(0.0), rx)
+    ry = vifelse(absd_g_trig_max, T(0.0), ry)
+    isinfd = isinf(d)
+    rx = vifelse(isinfd, T(NaN), rx)
+    ry = vifelse(isinfd, T(NaN), ry)
 
     return (rx, ry)
 end
 
-function sincos_fast(d::T) where {T<:Float32}
+function sincos_fast(d::FloatType32)
+    T = eltype(d)
     s = d
 
     q = round(d * (2 * T(M_1_PI)))
@@ -398,24 +416,33 @@ function sincos_fast(d::T) where {T<:Float32}
 
     rx = t + u
 
-    isnegzero(d) && (rx = T(-0.0))
+    rx = vifelse(isnegzero(d), T(-0.0), rx)
 
     u = sincos_b_kernel(s)
 
-    ry = u * s + T(1.0)
+    ry = muladd(u, s, T(1.0))
 
-    qi = unsafe_trunc(Int, q)
-    qi & 1 != 0 && (s = ry; ry = rx; rx = s)
-    qi & 2 != 0 && (rx = -rx)
-    (qi + 1) & 2 != 0 && (ry = -ry)
+    qi = unsafe_trunc(EquivalentInteger(T), q)
+    qi_isodd = qi & 1 != 0
+    s = vifelse(qi_isodd, ry, s)
+    ry = vifelse(qi_isodd, rx, ry)
+    rx = vifelse(qi_isodd, s, rx)
+    rx = vifelse(qi & 2 != 0, -rx, rx)
+    ry = vifelse((qi + 1) & 2 != 0, -ry, ry)
 
-    abs(d) > TRIG_MAX(T) && (rx = ry = T(0.0))
-    isinf(d) && (rx = ry = T(NaN))
+    absd_g_trig_max = abs(d) > TRIG_MAX(T)
+    rx = vifelse(absd_g_trig_max, T(0.0), rx)
+    ry = vifelse(absd_g_trig_max, T(0.0), ry)
+
+    isinfd = isinf(d)
+    rx = vifelse(isinfd, T(NaN), rx)
+    ry = vifelse(isinfd, T(NaN), ry)
 
     return (rx, ry)
 end
 
-function sincos(d::T) where {T<:Float64}
+function sincos(d::V) where V <: FloatType64
+    T = eltype(d)
     qh = trunc(d * ((2 * T(M_1_PI)) / (1 << 24)))
     ql = round(d * (2 * T(M_1_PI)) - qh * (1 << 24))
 
@@ -429,35 +456,44 @@ function sincos(d::T) where {T<:Float64}
 
     t  = s
     s  = dsqu(s)
-    sx = T(s)
+    sx = V(s)
 
     u  = sincos_a_kernel(sx)
 
     u *= sx * t.hi
 
     v  = dadd(t, u)
-    rx = T(v)
+    rx = V(v)
 
-    isnegzero(d) && (rx = T(-0.0))
+    rx = vifelse(isnegzero(d), T(-0.0), rx)
 
     u  = sincos_b_kernel(sx)
 
     v  = dadd(T(1.0), dmul(sx, u))
-    ry = T(v)
+    ry = V(v)
 
-    qli = unsafe_trunc(Int, ql)
-    qli & 1 != 0 && (u = ry; ry = rx; rx = u)
-    qli & 2 != 0 && (rx = -rx)
-    (qli + 1) & 2 != 0 && (ry = -ry)
+    qli = unsafe_trunc(EquivalentInteger(T), ql)
+    qli_odd = qli & 1 != 0
+    u = vifelse(qli_odd, ry, u)
+    ry = vifelse(qli_odd, rx, ry)
+    rx = vifelse(qli_odd, u, rx)
+    rx = vifelse(qli & 2 != 0, -rx, rx)
+    ry = vifelse((qli + 1) & 2 != 0, -ry, ry)
 
-    abs(d) > TRIG_MAX(T) && (rx = ry = T(0.0))
-    isinf(d) && (rx = ry = T(NaN))
+    absd_g_trig_max = abs(d) > TRIG_MAX(T)
+    rx = vifelse(absd_g_trig_max, T(0.0), rx)
+    ry = vifelse(absd_g_trig_max, T(0.0), ry)
+
+    isinfd = isinf(d)
+    rx = vifelse(isinfd, T(NaN), rx)
+    ry = vifelse(isinfd, T(NaN), ry)
 
     return (rx, ry)
 end
 
 
-function sincos(d::T) where {T<:Float32}
+function sincos(d::V) where V <: FloatType32
+    T = eltype(d)
     q = round(d * (2 * T(M_1_PI)))
 
     s = dadd2(d, q * (-PI_A(T) * T(0.5)))
@@ -467,29 +503,38 @@ function sincos(d::T) where {T<:Float32}
 
     t  = s
     s  = dsqu(s)
-    sx = T(s)
+    sx = V(s)
 
     u  = sincos_a_kernel(sx)
 
     u *= sx * t.hi
 
     v  = dadd(t, u)
-    rx = T(v)
+    rx = V(v)
 
-    isnegzero(d) && (rx = T(-0.0))
+    rx = vifelse(isnegzero(d), T(-0.0), rx)
 
     u  = sincos_b_kernel(sx)
 
     v  = dadd(T(1.0), dmul(sx, u))
-    ry = T(v)
+    ry = V(v)
 
-    qi = unsafe_trunc(Int, q)
-    qi & 1 != 0 && (u = ry; ry = rx; rx = u)
-    qi & 2 != 0 && (rx = -rx)
-    (qi + 1) & 2 != 0 && (ry = -ry)
 
-    abs(d) > TRIG_MAX(T) && (rx = ry = T(0.0))
-    isinf(d) && (rx = ry = T(NaN))
+    qli = unsafe_trunc(EquivalentInteger(T), q)
+    qli_odd = qli & 1 != 0
+    u = vifelse(qli_odd, ry, u)
+    ry = vifelse(qli_odd, rx, ry)
+    rx = vifelse(qli_odd, u, rx)
+    rx = vifelse(qli & 2 != 0, -rx, rx)
+    ry = vifelse((qli + 1) & 2 != 0, -ry, ry)
+
+    absd_g_trig_max = abs(d) > TRIG_MAX(T)
+    rx = vifelse(absd_g_trig_max, T(0.0), rx)
+    ry = vifelse(absd_g_trig_max, T(0.0), ry)
+
+    isinfd = isinf(d)
+    rx = vifelse(isinfd, T(NaN), rx)
+    ry = vifelse(isinfd, T(NaN), ry)
 
     return (rx, ry)
 end
@@ -509,7 +554,7 @@ Compute the tangent of `x`, where the output is in radians.
 """
 function tan_fast end
 
-@inline function tan_fast_kernel(x::Float64)
+@inline function tan_fast_kernel(x::FloatType64)
     c16 =  9.99583485362149960784268e-06
     c15 = -4.31184585467324750724175e-05
     c14 =  0.000103573238391744000389851
@@ -529,7 +574,7 @@ function tan_fast end
     return @horner x c1 c2 c3 c4 c5 c6 c7 c8 c9 c10 c11 c12 c13 c14 c15 c16
 end
 
-@inline function tan_fast_kernel(x::Float32)
+@inline function tan_fast_kernel(x::FloatType32)
     c7 =  0.00446636462584137916564941f0
     c6 = -8.3920182078145444393158f-05
     c5 =  0.0109639242291450500488281f0
@@ -540,7 +585,8 @@ end
     return @horner x c1 c2 c3 c4 c5 c6 c7
 end
 
-function tan_fast(d::T) where {T<:Float64}
+function tan_fast(d::FloatType64)
+    T = eltype(d)
     qh = trunc(d * (2 * T(M_1_PI)) / (1 << 24))
     ql = round(d * (2 * T(M_1_PI)) - qh * (1 << 24))
 
@@ -554,25 +600,30 @@ function tan_fast(d::T) where {T<:Float64}
 
     s = x * x
 
-    qli = unsafe_trunc(Int, ql)
-    qli & 1 != 0 && (x = -x)
+    qli = unsafe_trunc(EquivalentInteger(T), ql)
+    qli_odd = qli & 1 != 0
+    x = vifelse(qli_odd, -x, x)
 
     u = tan_fast_kernel(s)
 
     u = muladd(s, u * x, x)
 
-    qli & 1 != 0 && (u = T(1.0) / u)
+    u = vifelse(qli_odd, inv(u), u)
 
-    !isinf(d) && (isnegzero(d) || abs(d) > TRIG_MAX(T)) && (u = T(-0.0))
+    u = vifelse(
+        (!isinf(d)) & (isnegzero(d) | (abs(d) > TRIG_MAX(T))),
+        T(-0.0), u
+    )
 
     return u
 end
 
-function tan_fast(d::T) where {T<:Float32}
+function tan_fast(d::FloatType32)
+    T = eltype(d)
     q = round(d * (2 * T(M_1_PI)))
 
     x = d
-    
+
     x = muladd(q, -PI_A(T) * T(0.5), x)
     x = muladd(q, -PI_B(T) * T(0.5), x)
     x = muladd(q, -PI_C(T) * T(0.5), x)
@@ -580,16 +631,20 @@ function tan_fast(d::T) where {T<:Float32}
 
     s = x * x
 
-    qi = unsafe_trunc(Int, q)
-    qi & 1 != 0 && (x = -x)
+    qli = unsafe_trunc(EquivalentInteger(T), q)
+    qli_odd = qli & 1 != 0
+    x = vifelse(qli_odd, -x, x)
 
     u = tan_fast_kernel(s)
 
     u = muladd(s, u * x, x)
 
-    qi & 1 != 0 && (u = T(1.0) / u)
+    u = vifelse(qli_odd, inv(u), u)
 
-    !isinf(d) && (isnegzero(d) || abs(d) > TRIG_MAX(T)) && (u = T(-0.0))
+    u = vifelse(
+        (!isinf(d)) & (isnegzero(d) | (abs(d) > TRIG_MAX(T))),
+        T(-0.0), u
+    )
 
     return u
 end
@@ -614,7 +669,7 @@ end
     return dadd(c1, x.hi * (@horner x.hi c2 c3 c4 c5 c6 c7 c8 c9 c10 c11 c12 c13 c14 c15))
 end
 
-@inline function tan_kernel(x::Double{Float32})
+@inline function tan_kernel(x::Double{<:FloatType32})
     c7 =  0.00446636462584137916564941f0
     c6 = -8.3920182078145444393158f-05
     c5 =  0.0109639242291450500488281f0
@@ -625,7 +680,8 @@ end
     return dadd(c1,  x.hi * (@horner x.hi c2 c3 c4 c5 c6 c7))
 end
 
-function tan(d::T) where {T<:Float64}
+function tan(d::FloatType64)
+    T = eltype(d)
     qh = trunc(d * (T(M_2_PI)) / (1 << 24))
     s = dadd2(dmul(Double(T(M_2_PI_H), T(M_2_PI_L)), d), (d < 0 ? T(-0.5) : T(0.5)) - qh * (1 << 24))
     ql = trunc(T(s))
@@ -638,8 +694,9 @@ function tan(d::T) where {T<:Float64}
     s = dadd2(s, ql * (-PI_C(T) * T(0.5)            ))
     s = dadd2(s, (qh * (1 << 24) + ql) * (-PI_D(T) * T(0.5)))
 
-    qli = unsafe_trunc(Int, ql)
-    qli & 1 != 0 && (s = -s)
+    qli = unsafe_trunc(EquivalentInteger(T), ql)
+    qli_odd = qli & 1 != 0
+    s = vifelse(qli_odd, -s, s)
 
     t = s
     s = dsqu(s)
@@ -649,16 +706,20 @@ function tan(d::T) where {T<:Float64}
     x = dadd(T(1.0), dmul(u, s))
     x = dmul(t, x)
 
-    qli & 1 != 0 && (x = drec(x))
+    x = vifelse(qli_odd, drec(x), x)
 
     v = T(x)
-    
-    !isinf(d) && (isnegzero(d) || abs(d) > TRIG_MAX(T)) && (v = T(-0.0))
+
+    v = vifelse(
+        (!isinf(d)) & (isnegzero(d) | (abs(d) > TRIG_MAX(T))),
+        T(-0.0), v
+    )
 
     return v
 end
 
-function tan(d::T) where {T<:Float32}
+function tan(d::FloatType32)
+    T = eltype(d)
     q = round(d * (T(M_2_PI)))
 
     s = dadd2(d, q * -PI_A(T) * T(0.5))
@@ -667,8 +728,9 @@ function tan(d::T) where {T<:Float32}
     s = dadd2(s, q * -PI_XD(T) * T(0.5))
     s = dadd2(s, q * -PI_XE(T) * T(0.5))
 
-    qi = unsafe_trunc(Int, q)
-    qi & 1 != 0 && (s = -s)
+    qli = unsafe_trunc(EquivalentInteger(T), q)
+    qli_odd = qli & 1 != 0
+    s = vifelse(qli_odd, -s, s)
 
     t = s
     s = dsqu(s)
@@ -679,11 +741,14 @@ function tan(d::T) where {T<:Float32}
     x = dadd(T(1.0), dmul(u, s))
     x = dmul(t, x)
 
-    qi & 1 != 0 && (x = drec(x))
+    x = vifelse(qli_odd, drec(x), x)
 
     v = T(x)
-    
-    !isinf(d) && (isnegzero(d) || abs(d) > TRIG_MAX(T)) && (v = T(-0.0))
+
+    v = vifelse(
+        (!isinf(d)) & (isnegzero(d) | (abs(d) > TRIG_MAX(T))),
+        T(-0.0), v
+    )
 
     return v
 end
@@ -694,9 +759,9 @@ end
 
 Compute the inverse tangent of `x`, where the output is in radians.
 """
-function atan(x::T) where {T<:Union{Float32,Float64}}
+function atan(x::T) where {T<:FloatType}
     u = T(atan2k(Double(abs(x)), Double(T(1))))
-    isinf(x) && (u = T(PI_2))
+    u = vifelse(isinf(x), T(PI_2), u)
     flipsign(u, x)
 end
 
@@ -724,7 +789,7 @@ end
     return @horner x c1 c2 c3 c4 c5 c6 c7 c8 c9 c10 c11 c12 c13 c14 c15 c16 c17 c18 c19
 end
 
-@inline function atan_fast_kernel(x::Float32)
+@inline function atan_fast_kernel(x::FloatType32)
     c8 =  0.00282363896258175373077393f0
     c7 = -0.0159569028764963150024414f0
     c6 =  0.0425049886107444763183594f0
@@ -741,21 +806,22 @@ end
 
 Compute the inverse tangent of `x`, where the output is in radians.
 """
-function atan_fast(x::T) where {T<:Union{Float32,Float64}}
-    q = 0
-    if signbit(x)
-        x = -x
-        q = 2
-    end
-    if x > 1
-        x = 1 / x
-        q |= 1
-    end
+function atan_fast(x::T) where {T<:FloatType}
+    TI = EquivalentInteger(T)
+
+    q = vifelse(signbit(x), TI(2), TI(0))
+    x = abs(x)
+
+    xg1 = x > 1
+    x = vifelse(xg1, 1 / x, x)
+    q = vifelse(xg1, q | 1, q)
+
     t = x * x
     u = atan_fast_kernel(t)
-    t = x + x * t * u
-    q & 1 != 0 && (t = T(PI_2) - t)
-    q & 2 != 0 && (t = -t)
+    # t = x + x * t * u
+    t = muladd(x * t, u, x)
+    t = vifelse(q & 1 != 0, T(PI_2) - t, t)
+    t = vifelse(q & 2 != 0, -t, t)
     return t
 end
 
@@ -768,21 +834,21 @@ const under_atan2(::Type{Float32}) = 2.9387372783541830947f-39
 
 Compute the inverse tangent of `x/y`, using the signs of both `x` and `y` to determine the quadrant of the return value.
 """
-function atan(x::T, y::T) where {T<:Union{Float32,Float64}}
-    abs(y) < under_atan2(T) && (x *= T(Int64(1) << 53); y *= T(Int64(1) << 53))
+function atan(x::T, y::T) where {T<:FloatType}
+    absy_under_atan = abs(y) < under_atan2(eltype(y))
+    x = vifelse(absy_under_atan, x * T(Int64(1) << 53), x)
+    y = vifelse(absy_under_atan, y * T(Int64(1) << 53), y)
+
     r = T(atan2k(Double(abs(x)), Double(y)))
 
     r = flipsign(r, y)
-    if isinf(y) || y == 0
-        r = T(PI_2) - (isinf(y) ? _sign(y) * T(PI_2) : T(0.0))
-    end
-    if isinf(x)
-        r = T(PI_2) - (isinf(y) ? _sign(y) * T(PI_4) : T(0.0))
-    end
-    if x == 0
-        r = _sign(y) == -1 ? T(M_PI) : T(0.0)
-    end
-    return isnan(y) || isnan(x) ? T(NaN) : flipsign(r, x)
+    isinfy = isinf(y)
+    r = vifelse(isinfy, T(PI_2) - _sign(y) * T(PI_2), r)
+    r = vifelse(y == 0, T(PI_2), r)
+    r = vifelse(isinf(x), vifelse(isinfy, T(PI_2) - _sign(y) * T(PI_4), T(PI_2)), r)
+    r = vifelse(x == 0, vifelse(_sign(y) == -1, T(M_PI), T(0.0)), r)
+
+    return vifelse(isnan(y) | isnan(x), T(NaN), flipsign(r,x))
 end
 
 
@@ -791,19 +857,16 @@ end
 
 Compute the inverse tangent of `x/y`, using the signs of both `x` and `y` to determine the quadrant of the return value.
 """
-function atan_fast(x::T, y::T) where {T<:Union{Float32,Float64}}
+function atan_fast(x::T, y::T) where {T<:FloatType}
     r = atan2k_fast(abs(x), y)
     r = flipsign(r, y)
-    if isinf(y) || y == 0
-        r = T(PI_2) - (isinf(y) ? _sign(y) * T(PI_2) : T(0))
-    end
-    if isinf(x)
-        r = T(PI_2) - (isinf(y) ? _sign(y) * T(PI_4) : T(0))
-    end
-    if x == 0
-        r = _sign(y) == -1 ? T(M_PI) : T(0)
-    end
-    return isnan(y) || isnan(x) ? T(NaN) : flipsign(r, x)
+    r = vifelse(y == 0, T(PI_2), r)
+    infy = isinf(y)
+    r = vifelse(infy, T(PI_2) - _sign(y) * T(PI_2), r)
+    r = vifelse(isinf(x), vifelse(infy, T(PI_2) - _sign(y) * T(PI_4), T(PI_2)), r)
+    r = vifelse(x == 0, vifelse(_sign(y) == -1, T(M_PI), T(0)), r)
+
+    return vifelse(isnan(y) | isnan(x), T(NaN), flipsign(r, x))
 end
 
 
@@ -813,10 +876,10 @@ end
 
 Compute the inverse sine of `x`, where the output is in radians.
 """
-function asin(x::T) where {T<:Union{Float32,Float64}}
+function asin(x::T) where {T<:FloatType}
     d = atan2k(Double(abs(x)), dsqrt(dmul(dadd(T(1), x), dsub(T(1), x))))
     u = T(d)
-    abs(x) == 1 && (u = T(PI_2))
+    u = vifelse(abs(x) == 1, T(PI_2), u)
     flipsign(u, x)
 end
 
@@ -826,7 +889,7 @@ end
 
 Compute the inverse sine of `x`, where the output is in radians.
 """
-function asin_fast(x::T) where {T<:Union{Float32,Float64}}
+function asin_fast(x::T) where {T<:FloatType}
     flipsign(atan2k_fast(abs(x), _sqrt((1 + x) * (1 - x))), x)
 end
 
@@ -837,11 +900,11 @@ end
 
 Compute the inverse cosine of `x`, where the output is in radians.
 """
-function acos(x::T) where {T<:Union{Float32,Float64}}
+function acos(x::T) where {T<:FloatType}
     d = atan2k(dsqrt(dmul(dadd(T(1), x), dsub(T(1), x))), Double(abs(x)))
     d = flipsign(d, x)
-    abs(x) == 1 && (d = Double(T(0)))
-    signbit(x) && (d = dadd(MDPI(T), d))
+    d = vifelse(abs(x) == 1, Double(T(0)), d)
+    d = vifelse(signbit(x), dadd(MDPI(T), d), d)
     return T(d)
 end
 
@@ -852,5 +915,5 @@ end
 Compute the inverse cosine of `x`, where the output is in radians.
 """
 function acos_fast(x::T) where {T<:Union{Float32,Float64}}
-    flipsign(atan2k_fast(_sqrt((1 + x) * (1 - x)), abs(x)), x) + (signbit(x) ? T(M_PI) : T(0))
+    flipsign(atan2k_fast(_sqrt((1 + x) * (1 - x)), abs(x)), x) + vifelse(signbit(x), T(M_PI), T(0))
 end

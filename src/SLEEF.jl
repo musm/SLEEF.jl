@@ -8,6 +8,28 @@ module SLEEF
 
 using Base.Math: uinttype, @horner, exponent_bias, exponent_mask, significand_bits, IEEEFloat, exponent_raw_max
 
+using SIMD
+using SIMD: vifelse
+
+const FloatType64 = Union{Float64,Vec{<:Any,Float64}}
+const FloatType32 = Union{Float32,Vec{<:Any,Float32}}
+const FloatType = Union{FloatType64,FloatType32}
+const IntegerType64 = Union{Int64,Vec{<:Any,Int64}}
+const IntegerType32 = Union{Int32,Vec{<:Any,Int32}}
+const IntegerType = Union{IntegerType64,IntegerType32}
+
+EquivalentInteger(::Type{Float64}) = Int64
+EquivalentInteger(::Type{Float32}) = Int32
+EquivalentInteger(::Type{Vec{N,Float64}}) where N = Vec{N,Int64}
+EquivalentInteger(::Type{Vec{N,Float32}}) where N = Vec{N,Int32}
+
+@generated function Base.unsafe_trunc(::Type{I}, x::Vec{N,T}) where {N,T,I}
+    quote
+        $(Expr(:meta,:inline))
+        Vec{$N,$I}($(Expr(:tuple, [:(Core.VecElement(unsafe_trunc($I, x[$n]))) for n ∈ 1:N]...)))
+    end
+end
+
 ## constants
 
 const MLN2  = 6.931471805599453094172321214581765680755001343602552541206800094933936219696955e-01 # log(2)

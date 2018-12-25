@@ -19,11 +19,11 @@ where `significand ∈ [1, 2)`.
     * `x = ±Inf`  returns `INT_MAX`
     * `x = NaN`  returns `FP_ILOGBNAN`
 """
-function ilogb(x::T) where {T<:Union{Float32,Float64}}
+function ilogb(x::FloatType)
     e = ilogbk(abs(x))
-    x == 0 && (e = FP_ILOGB0)
-    isnan(x) && (e = FP_ILOGBNAN)
-    isinf(x) && (e = INT_MAX)
+    e = vifelse(x == 0, FP_ILOGB0, e)
+    e = vifelse(isnan(x), FP_ILOGBNAN, e)
+    e = vifelse(isinf(x), INT_MAX, e)
     return e
 end
 
@@ -34,12 +34,13 @@ end
 
 Returns the base `10` logarithm of `x`.
 """
-function log10(a::T) where {T<:Union{Float32,Float64}}
-    x = T(dmul(logk(a), MDLN10E(T)))
+function log10(a::V) where V <: FloatType
+    T = eltype(a)
+    x = V(dmul(logk(a), MDLN10E(T)))
 
-    isinf(a) && (x = T(Inf))
-    (a < 0 || isnan(a)) && (x = T(NaN))
-    a == 0 && (x = T(-Inf))
+    x = vifelse(isinf(a), T(Inf), x)
+    x = vifelse((a < 0) | isnan(a), T(NaN), x)
+    x = vifelse(a == 0, T(-Inf), x)
 
     return x
 end
@@ -51,12 +52,13 @@ end
 
 Returns the base `2` logarithm of `x`.
 """
-function log2(a::T) where {T<:Union{Float32,Float64}}
-    u = T(dmul(logk(a), MDLN2E(T)))
+function log2(a::V) where V <: FloatType
+    T = eltype(a)
+    u = V(dmul(logk(a), MDLN2E(T)))
 
-    isinf(a) && (u = T(Inf))
-    (a < 0 || isnan(a)) && (u = T(NaN))
-    a == 0 && (u = T(-Inf))
+    u = vifelse(isinf(a), T(Inf), u)
+    u = vifelse((a < 0) | isnan(a), T(NaN), u)
+    u = vifelse(a == 0, T(-Inf), u)
 
     return u
 end
@@ -71,20 +73,21 @@ const over_log1p(::Type{Float32}) = 1f38
 
 Accurately compute the natural logarithm of 1+x.
 """
-function log1p(a::T) where {T<:Union{Float32,Float64}}
+function log1p(a::V) where {V<:FloatType}
+    T = eltype(a)
     x = T(logk2(dadd2(a, T(1.0))))
 
-    a > over_log1p(T) && (x = T(Inf))
-    a < -1 && (x = T(NaN))
-    a == -1 && (x = T(-Inf))
-    isnegzero(a) && (x = T(-0.0))
+    x = vifelse(a > over_log1p(T), T(Inf), x)
+    x = vifelse(a < -1, T(NaN), x)
+    x = vifelse(a == -1, T(-Inf), x)
+    x = vifelse(isnegzero(a), T(-0.0), x)
 
     return x
 end
 
 
 
-@inline function log_kernel(x::Float64)
+@inline function log_kernel(x::FloatType64)
     c7 = 0.1532076988502701353
     c6 = 0.1525629051003428716
     c5 = 0.1818605932937785996
@@ -95,7 +98,7 @@ end
     return @horner x c1 c2 c3 c4 c5 c6 c7
 end
 
-@inline function log_kernel(x::Float32)
+@inline function log_kernel(x::FloatType32)
     c3 = 0.3027294874f0
     c2 = 0.3996108174f0
     c1 = 0.6666694880f0
@@ -108,27 +111,28 @@ end
 Compute the natural logarithm of `x`. The inverse of the natural logarithm is
 the natural expoenential function `exp(x)`
 """
-function log(d::T) where {T<:Union{Float32,Float64}}
+function log(d::V) where {V <: FloatType}
+    T = eltype(d)
     o = d < floatmin(T)
-    o && (d *= T(Int64(1) << 32) * T(Int64(1) << 32))
+    d = vifelse(o, d * T(Int64(1) << 32) * T(Int64(1) << 32), d)
 
     e = ilogb2k(d * T(1.0/0.75))
     m = ldexp3k(d, -e)
-    o && (e -= 64)
+    e = vifelse(o, e - 64, e)
 
     x  = ddiv(dadd2(T(-1.0), m), dadd2(T(1.0), m))
     x2 = x.hi*x.hi
 
     t = log_kernel(x2)
 
-    s = dmul(MDLN2(T), T(e))
+    s = dmul(MDLN2(T), convert(V,e))
     s = dadd(s, scale(x, T(2.0)))
     s = dadd(s, x2*x.hi*t)
-    r = T(s)
+    r = V(s)
 
-    isinf(d) && (r = T(Inf))
-    (d < 0 || isnan(d)) && (r = T(NaN))
-    d == 0 && (r = -T(Inf))
+    r = vifelse(isinf(d), T(Inf), r)
+    r = vifelse((d < 0) | isnan(d), T(NaN), r)
+    r = vifelse(d == 0, T(-Inf), r)
 
     return r
 end
@@ -151,7 +155,7 @@ end
 # 1, we multiply  `m` by `2` and subtract 1 for the exponent `e` when `m` is
 # less than `sqrt(2)/2`
 
-@inline function log_fast_kernel(x::Float64)
+@inline function log_fast_kernel(x::FloatType64)
     c8 = 0.153487338491425068243146
     c7 = 0.152519917006351951593857
     c6 = 0.181863266251982985677316
@@ -163,7 +167,7 @@ end
     return @horner x c1 c2 c3 c4 c5 c6 c7 c8
 end
 
-@inline function log_fast_kernel(x::Float32)
+@inline function log_fast_kernel(x::FloatType32)
     c5 = 0.2392828464508056640625f0
     c4 = 0.28518211841583251953125f0
     c3 = 0.400005877017974853515625f0
@@ -178,24 +182,26 @@ end
 Compute the natural logarithm of `x`. The inverse of the natural logarithm is
 the natural expoenential function `exp(x)`
 """
-function log_fast(d::T) where {T<:Union{Float32,Float64}}
+function log_fast(d::FloatType)
+    T = eltype(d)
     o = d < floatmin(T)
-    o && (d *= T(Int64(1) << 32) * T(Int64(1) << 32))
+    d = vifelse(o, d * T(Int64(1) << 32) * T(Int64(1) << 32), d)
 
     e = ilogb2k(d * T(1.0/0.75))
     m = ldexp3k(d, -e)
-    o && (e -= 64)
+    e = vifelse(o, e - 64, e)
 
     x  = (m - 1) / (m + 1)
     x2 = x * x
 
     t = log_fast_kernel(x2)
-    
-    x = x * t + T(MLN2) * e
-    
-    isinf(d) && (x = T(Inf))
-    (d < 0 || isnan(d)) && (x = T(NaN))
-    d == 0 && (x = -T(Inf))
+
+    x = muladd(x, t, T(MLN2) * e)
+
+
+    x = vifelse(isinf(d), T(Inf), x)
+    x = vifelse((d < 0) | isnan(d), T(NaN), x)
+    x = vifelse(d == 0, T(-Inf), x)
 
     return x
 end

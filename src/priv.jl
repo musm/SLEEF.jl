@@ -23,39 +23,50 @@ exponent amount back in.
     q = q - (m << offset)
     m, q
 end
-@inline split_exponent(::Type{Float64}, q::Int) = _split_exponent(q, UInt(9), UInt(31), UInt(2))
-@inline split_exponent(::Type{Float32}, q::Int) = _split_exponent(q, UInt(6), UInt(31), UInt(2))
+@inline split_exponent(::Type{Float64}, q::IntegerType) = _split_exponent(q, UInt(9), UInt(31), UInt(2))
 
+@inline split_exponent(::Type{Float32}, q::IntegerType) = _split_exponent(q, UInt(6), UInt(31), UInt(2))
 """
     ldexpk(a, n)
 
 Computes `a × 2^n`.
 """
-@inline function ldexpk(x::T, q::Int) where {T<:Union{Float32,Float64}}
+@inline function ldexpk(x::FloatType, q::IntegerType)
+    T = eltype(x)
     bias = exponent_bias(T)
     emax = exponent_raw_max(T)
     m, q = split_exponent(T, q)
     m += bias
-    m = ifelse(m < 0, 0, m)
-    m = ifelse(m > emax, emax, m)
+    m = vifelse(m < 0, 0, m)
+    m = vifelse(m > emax, emax, m)
     q += bias
     u = integer2float(T, m)
-    x = x * u * u * u * u
+    u² = u * u
+    x = x * u² * u²
     u = integer2float(T, q)
     x * u
 end
 
-@inline function ldexp2k(x::T, e::Int) where {T<:Union{Float32,Float64}}
-    x * pow2i(T, e >> 1) * pow2i(T, e - (e >> 1))
+@inline function ldexp2k(x::FloatType, e::IntegerType)
+    x * pow2i(eltype(x), e >> 1) * pow2i(eltype(x), e - (e >> 1))
 end
 
 @inline function ldexp3k(x::T, e::Int) where {T<:Union{Float32,Float64}}
     reinterpret(T, reinterpret(Unsigned, x) + (Int64(e) << significand_bits(T)) % uinttype(T))
 end
+@generated function ldexp3k(x::Vec{N,T}, e::IntegerType) where {N,T<:Union{Float32,Float64}}
+    UT = Base.uinttype(T)
+    quote
+        $(Expr(:meta,:inline))
+        reinterpret(Vec{$N,$T}, reinterpret(Vec{$N,$UT}, x) +
+            Vec{$N,$UT}($(Expr(:tuple, [:((Int64(e[$n]) << $(significand_bits(T))) % $UT) for n ∈ 1:N]...)))
+        )
+    end
+end
 
 # threshold values for `ilogbk`
-const threshold_exponent(::Type{Float64}) = 300
-const threshold_exponent(::Type{Float32}) = 64
+threshold_exponent(::Type{Float64}) = 300
+threshold_exponent(::Type{Float32}) = 64
 
 """
     ilogbk(x) -> Int
@@ -67,90 +78,85 @@ words this returns the binary exponent of `x` so that
 
 where `significand ∈ [1, 2)`.
 """
-@inline function ilogbk(d::T) where {T<:Union{Float32,Float64}}
-    m = d < T(2)^-threshold_exponent(T)
-    d = ifelse(m, d * T(2)^threshold_exponent(T), d)
+@inline function ilogbk(d::FloatType)
+    T = eltype(d)
+    m = d < (T(2)^-threshold_exponent(T))
+    d = vifelse(m, d * T(2)^threshold_exponent(T), d)
     q = float2integer(d) & exponent_raw_max(T)
-    q = ifelse(m, q - (threshold_exponent(T) + exponent_bias(T)), q - exponent_bias(T))
+    q = vifelse(m, q - (threshold_exponent(T) + exponent_bias(T)), q - exponent_bias(T))
 end
 
 # similar to ilogbk, but argument has to be a normalized float value
-@inline function ilogb2k(d::T) where {T<:Union{Float32,Float64}}
-    (float2integer(d) & exponent_raw_max(T)) - exponent_bias(T)
+@inline function ilogb2k(d::FloatType)
+    T = eltype(d)
+    I = EquivalentInteger(T)
+    (float2integer(d) & I(exponent_raw_max(T))) - I(exponent_bias(T))
 end
 
+const c20d =  1.06298484191448746607415e-05
+const c19d = -0.000125620649967286867384336
+const c18d =  0.00070557664296393412389774
+const c17d = -0.00251865614498713360352999
+const c16d =  0.00646262899036991172313504
+const c15d = -0.0128281333663399031014274
+const c14d =  0.0208024799924145797902497
+const c13d = -0.0289002344784740315686289
+const c12d =  0.0359785005035104590853656
+const c11d = -0.041848579703592507506027
+const c10d =  0.0470843011653283988193763
+const c9d  = -0.0524914210588448421068719
+const c8d  =  0.0587946590969581003860434
+const c7d  = -0.0666620884778795497194182
+const c6d  =  0.0769225330296203768654095
+const c5d  = -0.0909090442773387574781907
+const c4d  =  0.111111108376896236538123
+const c3d  = -0.142857142756268568062339
+const c2d  =  0.199999999997977351284817
+const c1d =  -0.333333333333317605173818
 
-let
-global atan2k_fast
-global atan2k
+const c9f = -0.00176397908944636583328247f0
+const c8f =  0.0107900900766253471374512f0
+const c7f = -0.0309564601629972457885742f0
+const c6f =  0.0577365085482597351074219f0
+const c5f = -0.0838950723409652709960938f0
+const c4f =  0.109463557600975036621094f0
+const c3f = -0.142626821994781494140625f0
+const c2f =  0.199983194470405578613281f0
+const c1f = -0.333332866430282592773438f0
 
-c20d =  1.06298484191448746607415e-05
-c19d = -0.000125620649967286867384336
-c18d =  0.00070557664296393412389774
-c17d = -0.00251865614498713360352999
-c16d =  0.00646262899036991172313504
-c15d = -0.0128281333663399031014274
-c14d =  0.0208024799924145797902497
-c13d = -0.0289002344784740315686289
-c12d =  0.0359785005035104590853656
-c11d = -0.041848579703592507506027
-c10d =  0.0470843011653283988193763
-c9d  = -0.0524914210588448421068719
-c8d  =  0.0587946590969581003860434
-c7d  = -0.0666620884778795497194182
-c6d  =  0.0769225330296203768654095
-c5d  = -0.0909090442773387574781907
-c4d  =  0.111111108376896236538123
-c3d  = -0.142857142756268568062339
-c2d  =  0.199999999997977351284817
-c1d =  -0.333333333333317605173818
+@inline atan2k_fast_kernel(x::FloatType64) = @horner x c1d c2d c3d c4d c5d c6d c7d c8d c9d c10d c11d c12d c13d c14d c15d c16d c17d c18d c19d c20d
+@inline atan2k_fast_kernel(x::FloatType32) = @horner x c1f c2f c3f c4f c5f c6f c7f c8f c9f
 
-c9f = -0.00176397908944636583328247f0
-c8f =  0.0107900900766253471374512f0
-c7f = -0.0309564601629972457885742f0
-c6f =  0.0577365085482597351074219f0
-c5f = -0.0838950723409652709960938f0
-c4f =  0.109463557600975036621094f0
-c3f = -0.142626821994781494140625f0
-c2f =  0.199983194470405578613281f0
-c1f = -0.333332866430282592773438f0
+@inline function atan2k_fast(y::V, x::V) where {T<:Union{Float32,Float64},V<:Union{T,Vec{<:Any,T}}}
+    xl0 = x < 0
+    q = vifelse(xl0, -2, 0)
+    x = vifelse(xl0, -x, x)
+    ygx = y > x
+    t = x
+    x = vifelse(ygx, y, x)
+    y = vifelse(ygx, -t, y)
+    q = vifelse(ygx, q+1, q)
 
-global @inline atan2k_fast_kernel(x::Float64) = @horner x c1d c2d c3d c4d c5d c6d c7d c8d c9d c10d c11d c12d c13d c14d c15d c16d c17d c18d c19d c20d
-global @inline atan2k_fast_kernel(x::Float32) = @horner x c1f c2f c3f c4f c5f c6f c7f c8f c9f
-
-@inline function atan2k_fast(y::T, x::T) where {T<:Union{Float32,Float64}}
-    q = 0
-    if x < 0
-        x = -x
-        q = -2
-    end
-    if y > x
-        t = x; x = y
-        y = -t
-        q += 1
-    end
     s = y / x
     t = s * s
     u = atan2k_fast_kernel(t)
-    t = u * t * s + s
-    q * T(PI_2) + t
+    t = muladd(u, t * s, s)
+    muladd(q, T(PI_2), t)
 end
 
 
-global @inline atan2k_kernel(x::Double{Float64}) = @horner x.hi c1d c2d c3d c4d c5d c6d c7d c8d c9d c10d c11d c12d c13d c14d c15d c16d c17d c18d c19d c20d
-global @inline atan2k_kernel(x::Double{Float32}) = dadd(c1f, x.hi * (@horner x.hi c2f c3f c4f c5f c6f c7f c8f c9f))
+@inline atan2k_kernel(x::Double{<:FloatType64}) = @horner x.hi c1d c2d c3d c4d c5d c6d c7d c8d c9d c10d c11d c12d c13d c14d c15d c16d c17d c18d c19d c20d
+@inline atan2k_kernel(x::Double{<:FloatType32}) = dadd(c1f, x.hi * (@horner x.hi c2f c3f c4f c5f c6f c7f c8f c9f))
 
-@inline function atan2k(y::Double{T}, x::Double{T}) where {T<:Union{Float32,Float64}}
-    q = 0
-    if x < 0
-        x = -x
-        q = -2
-    end
-    if y > x
-        t = x; x = y
-        y = -t
-        q += 1
-    end
+@inline function atan2k(y::Double{V}, x::Double{V}) where {T,V<:Union{T,Vec{<:Any,T}}}
+    xl0 = x < 0
+    q = vifelse(xl0, -2, 0)
+    x = vifelse(xl0, -x, x)
+    ygx = y > x
+    t = x
+    x = vifelse(ygx, y, x)
+    y = vifelse(ygx, -t, y)
+    q = vifelse(ygx, q+1, q)
 
     s = ddiv(y, x)
     t = dsqu(s)
@@ -160,10 +166,9 @@ global @inline atan2k_kernel(x::Double{Float32}) = dadd(c1f, x.hi * (@horner x.h
 
     t = dmul(t, u)
     t = dmul(s, dadd(T(1.0), t))
-    T <: Float64 && abs(s.hi) < 1e-200 && (t = s)
-    t = dadd(dmul(T(q), MDPI2(T)), t)
+    T <: Float64 && (t = vifelse(abs(s.hi) < 1e-200, s, t))
+    t = dadd(dmul(V(q), MDPI2(T)), t)
     return t
-end
 end
 
 
@@ -171,7 +176,7 @@ end
 const under_expk(::Type{Float64}) = -1000.0
 const under_expk(::Type{Float32}) = -104f0
 
-@inline function expk_kernel(x::Float64)
+@inline function expk_kernel(x::FloatType64)
     c10 = 2.51069683420950419527139e-08
     c9  = 2.76286166770270649116855e-07
     c8  = 2.75572496725023574143864e-06
@@ -185,7 +190,7 @@ const under_expk(::Type{Float32}) = -104f0
     return @horner x c1 c2 c3 c4 c5 c6 c7 c8 c9 c10
 end
 
-@inline function  expk_kernel(x::Float32)
+@inline function  expk_kernel(x::FloatType32)
     c5 = 0.00136324646882712841033936f0
     c4 = 0.00836596917361021041870117f0
     c3 = 0.0416710823774337768554688f0
@@ -194,28 +199,28 @@ end
     return @horner x c1 c2 c3 c4 c5
 end
 
-@inline function expk(d::Double{T}) where {T<:Union{Float32,Float64}}
-    q = round(T(d) * T(MLN2E))
-    qi = unsafe_trunc(Int, q)
+@inline function expk(d::Double{V}) where {T<:Union{Float32,Float64},V<:Union{T,Vec{<:Any,T}}}
+    q = round(V(d) * V(MLN2E))
+    qi = unsafe_trunc(EquivalentInteger(T), q)
 
     s = dadd(d, -q * L2U(T))
     s = dadd(s, -q * L2L(T))
 
     s = dnormalize(s)
 
-    u = expk_kernel(T(s))
+    u = expk_kernel(V(s))
 
     t = dadd(s, dmul(dsqu(s), u))
     t = dadd(T(1.0), t)
-    u = ldexpk(T(t), qi)
+    u = ldexpk(V(t), qi)
 
-    (d.hi < under_expk(T)) && (u = T(0.0))
+    u = vifelse(d.hi < under_expk(T), V(0.0), u)
     return u
 end
 
 
 
-@inline function expk2_kernel(x::Double{Float64})
+@inline function expk2_kernel(x::Double{<:FloatType64})
     c11 = 0.1602472219709932072e-9
     c10  = 0.2092255183563157007e-8
     c9  = 0.2505230023782644465e-7
@@ -231,7 +236,7 @@ end
     return dadd(dmul(x, u), c1)
 end
 
-@inline function  expk2_kernel(x::Double{Float32})
+@inline function  expk2_kernel(x::Double{<:FloatType32})
     c5 = 0.1980960224f-3
     c4 = 0.1394256484f-2
     c3 = 0.8333456703f-2
@@ -241,7 +246,7 @@ end
     return dadd(dmul(x, u), c1)
 end
 
-@inline function expk2(d::Double{T}) where {T<:Union{Float32,Float64}}
+@inline function expk2(d::Double{V}) where {T<:Union{Float32,Float64},V<:Union{T,Vec{<:Any,T}}}
     q = round(T(d) * T(MLN2E))
     qi = unsafe_trunc(Int, q)
 
@@ -255,13 +260,13 @@ end
 
     t = Double(ldexp2k(t.hi, qi), ldexp2k(t.lo, qi))
 
-    (d.hi < under_expk(T)) && (t = Double(T(0.0)))
+    t = vifelse(d.hi < under_expk(T), Double(V(0.0)), t)
     return t
 end
 
 
 
-@inline function logk2_kernel(x::Float64)
+@inline function logk2_kernel(x::FloatType64)
     c8 = 0.13860436390467167910856
     c7 = 0.131699838841615374240845
     c6 = 0.153914168346271945653214
@@ -273,7 +278,7 @@ end
     return @horner x c1 c2 c3 c4 c5 c6 c7 c8
 end
 
-@inline function logk2_kernel(x::Float32)
+@inline function logk2_kernel(x::FloatType32)
     c4 = 0.240320354700088500976562f0
     c3 = 0.285112679004669189453125f0
     c2 = 0.400007992982864379882812f0
@@ -281,7 +286,7 @@ end
     return @horner x c1 c2 c3 c4
 end
 
-@inline function logk2(d::Double{T}) where {T<:Union{Float32,Float64}}
+@inline function logk2(d::Double{V}) where {T<:Union{Float32,Float64},V<:Union{T,Vec{<:Any,T}}}
     e  = ilogbk(d.hi * T(1.0/0.75))
     m  = scale(d, pow2i(T, -e))
 
@@ -298,7 +303,7 @@ end
 
 
 
-@inline function logk_kernel(x::Double{Float64})
+@inline function logk_kernel(x::Double{<:FloatType64})
     c10 = 0.116255524079935043668677
     c9 = 0.103239680901072952701192
     c8 = 0.117754809412463995466069
@@ -312,22 +317,23 @@ end
     dadd2(dmul(x, @horner x.hi c2 c3 c4 c5 c6 c7 c8 c9 c10), c1)
 end
 
-@inline function logk_kernel(x::Double{Float32})
+@inline function logk_kernel(x::Double{<:FloatType32})
     c4 = 0.240320354700088500976562f0
     c3 = 0.285112679004669189453125f0
     c2 = 0.400007992982864379882812f0
-    c1 = Double(0.66666662693023681640625f0, 3.69183861259614332084311f-9)    
+    c1 = Double(0.66666662693023681640625f0, 3.69183861259614332084311f-9)
     dadd2(dmul(x, @horner x.hi c2 c3 c4), c1)
 end
 
-@inline function logk(d::T) where {T<:Union{Float32,Float64}}
+@inline function logk(d::FloatType)
+    T = eltype(d)
     o = d < floatmin(T)
-    o && (d *= T(Int64(1) << 32) * T(Int64(1) << 32))
+    d = vifelse(o, d * T(Int64(1) << 32) * T(Int64(1) << 32), d)
 
     e  = ilogb2k(d * T(1.0/0.75))
     m  = ldexp3k(d, -e)
 
-    o && (e -= 64)
+    e = vifelse(o, e - 64, e)
 
     x  = ddiv(dsub2(m, T(1.0)), dadd2(T(1.0), m))
     x2 = dsqu(x)

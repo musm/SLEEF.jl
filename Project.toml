@@ -2,11 +2,14 @@ name = "SLEEF"
 uuid = "3e6341c9-01f6-5312-b33f-f8894a2e817a"
 license = "MIT"
 repo = "https://github.com/musm/SLEEF.jl.git"
-version = "v0.5.1"
+version = "0.5.1"
+
+[deps]
+SIMD = "fdea26ae-647d-5447-a871-4b548cad5224"
 
 [extras]
-Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 Printf = "de0858da-6303-5e67-8744-51eddeeeb8d7"
+Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 
 [targets]
-test = ["Test","Printf"]
+test = ["Test", "Printf"]
