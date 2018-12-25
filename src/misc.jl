@@ -66,9 +66,9 @@ function cbrt_fast(d::V) where V <: FloatType
     x  = cbrt_kernel(d)
     y  = x * x
     y  = y * y
-    x  = muladd(T(-1/3), muladd(d, y, - x), x)
+    x -= (d * y - x) * T(1 / 3)
     y  = d * x * x
-    y  = (y - T(2 / 3) * y * muladd(y, x, T(- 1))) * q
+    y = (y - T(2 / 3) * y * (y * x - 1)) * q
 end
 
 
@@ -89,7 +89,7 @@ function cbrt(d::V) where V <: FloatType
     x  = cbrt_kernel(d)
     y  = x * x
     y  = y * y
-    x  = muladd(T(-1 / 3), muladd(d, y, - x), x)
+    x -= (d * y - x) * T(1 / 3)
     z  = x
     u  = dsqu(x)
     u  = dsqu(u)
@@ -121,5 +121,5 @@ function hypot(x::T, y::T) where {T<:vIEEEFloat}
     y = max(a,b)
 
     r = vifelse(x == 0, y, y / x)
-    x * _sqrt(muladd(r, r, T(1.0)))
+    x * sqrt(T(1.0) + r * r)
 end
