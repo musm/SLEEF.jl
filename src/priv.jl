@@ -89,7 +89,7 @@ end
 # similar to ilogbk, but argument has to be a normalized float value
 @inline function ilogb2k(d::FloatType)
     T = eltype(d)
-    I = Int == Int32 ? Int32 : EquivalentInteger(T)
+    I = EquivalentInteger(T)
     (float2integer(d) & I(exponent_raw_max(T))) - I(exponent_bias(T))
 end
 

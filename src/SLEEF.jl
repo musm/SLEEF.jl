@@ -18,9 +18,9 @@ const IntegerType64 = Union{Int64,Vec{<:Any,Int64}}
 const IntegerType32 = Union{Int32,Vec{<:Any,Int32}}
 const IntegerType = Union{IntegerType64,IntegerType32}
 
-EquivalentInteger(::Type{Float64}) = Int64
+EquivalentInteger(::Type{Float64}) = Int == Int32 ? Int32 : Int64
 EquivalentInteger(::Type{Float32}) = Int32
-EquivalentInteger(::Type{Vec{N,Float64}}) where N = Vec{N,Int64}
+EquivalentInteger(::Type{Vec{N,Float64}}) where N = Int == Int32 ? Vec{N,Int32} : Vec{N,Int64}
 EquivalentInteger(::Type{Vec{N,Float32}}) where N = Vec{N,Int32}
 
 @generated function Base.unsafe_trunc(::Type{I}, x::Vec{N,T}) where {N,T,I}
