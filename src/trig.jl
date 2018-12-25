@@ -650,7 +650,7 @@ function tan_fast(d::FloatType32)
 end
 
 
-@inline function tan_kernel(x::Double{Float64})
+@inline function tan_kernel(x::Double{<:FloatType64})
     c15 = 1.01419718511083373224408e-05
     c14 = -2.59519791585924697698614e-05
     c13 = 5.23388081915899855325186e-05
@@ -680,11 +680,11 @@ end
     return dadd(c1,  x.hi * (@horner x.hi c2 c3 c4 c5 c6 c7))
 end
 
-function tan(d::FloatType64)
+function tan(d::V) where V <: FloatType64
     T = eltype(d)
     qh = trunc(d * (T(M_2_PI)) / (1 << 24))
-    s = dadd2(dmul(Double(T(M_2_PI_H), T(M_2_PI_L)), d), (d < 0 ? T(-0.5) : T(0.5)) - qh * (1 << 24))
-    ql = trunc(T(s))
+    s = dadd2(dmul(Double(T(M_2_PI_H), T(M_2_PI_L)), d), vifelse(d < 0, V(-0.5), V(0.5)) - qh * (1 << 24))
+    ql = trunc(V(s))
 
     s = dadd2(d, qh * (-PI_A(T) * T(0.5) * (1 << 24)))
     s = dadd2(s, ql * (-PI_A(T) * T(0.5)            ))
@@ -708,7 +708,7 @@ function tan(d::FloatType64)
 
     x = vifelse(qli_odd, drec(x), x)
 
-    v = T(x)
+    v = V(x)
 
     v = vifelse(
         (!isinf(d)) & (isnegzero(d) | (abs(d) > TRIG_MAX(T))),
@@ -718,7 +718,7 @@ function tan(d::FloatType64)
     return v
 end
 
-function tan(d::FloatType32)
+function tan(d::V) where V <: FloatType32
     T = eltype(d)
     q = round(d * (T(M_2_PI)))
 
@@ -743,7 +743,7 @@ function tan(d::FloatType32)
 
     x = vifelse(qli_odd, drec(x), x)
 
-    v = T(x)
+    v = V(x)
 
     v = vifelse(
         (!isinf(d)) & (isnegzero(d) | (abs(d) > TRIG_MAX(T))),
@@ -900,12 +900,13 @@ end
 
 Compute the inverse cosine of `x`, where the output is in radians.
 """
-function acos(x::T) where {T<:FloatType}
+function acos(x::V) where {V<:FloatType}
+    T = eltype(x)
     d = atan2k(dsqrt(dmul(dadd(T(1), x), dsub(T(1), x))), Double(abs(x)))
     d = flipsign(d, x)
     d = vifelse(abs(x) == 1, Double(T(0)), d)
     d = vifelse(signbit(x), dadd(MDPI(T), d), d)
-    return T(d)
+    return V(d)
 end
 
 

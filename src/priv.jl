@@ -150,7 +150,11 @@ end
 
 @inline function atan2k(y::Double{V}, x::Double{V}) where {T,V<:Union{T,Vec{<:Any,T}}}
     xl0 = x < 0
-    q = vifelse(xl0, -2, 0)
+    if V <: Vec
+        q = vifelse(xl0, Vec{length(x.hi),EquivalentInteger(T)}(-2), 0)
+    else
+        q = vifelse(xl0, -2, 0)
+    end
     x = vifelse(xl0, -x, x)
     ygx = y > x
     t = x
@@ -167,7 +171,7 @@ end
     t = dmul(t, u)
     t = dmul(s, dadd(T(1.0), t))
     T <: Float64 && (t = vifelse(abs(s.hi) < 1e-200, s, t))
-    t = dadd(dmul(V(q), MDPI2(T)), t)
+    t = dadd(dmul(convert(V,q), MDPI2(T)), t)
     return t
 end
 
@@ -247,8 +251,8 @@ end
 end
 
 @inline function expk2(d::Double{V}) where {T<:Union{Float32,Float64},V<:Union{T,Vec{<:Any,T}}}
-    q = round(T(d) * T(MLN2E))
-    qi = unsafe_trunc(Int, q)
+    q = round(V(d) * T(MLN2E))
+    qi = unsafe_trunc(EquivalentInteger(T), q)
 
     s = dadd(d, -q * L2U(T))
     s = dadd(s, -q * L2L(T))
@@ -295,7 +299,7 @@ end
 
     t  = logk2_kernel(x2.hi)
 
-    s = dmul(MDLN2(T), T(e))
+    s = dmul(MDLN2(T), convert(V,e))
     s = dadd(s, scale(x, T(2.0)))
     s = dadd(s, dmul(dmul(x2, x), t))
     return s
