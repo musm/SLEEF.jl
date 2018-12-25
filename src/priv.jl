@@ -93,39 +93,43 @@ end
     (float2integer(d) & I(exponent_raw_max(T))) - I(exponent_bias(T))
 end
 
-const c20d =  1.06298484191448746607415e-05
-const c19d = -0.000125620649967286867384336
-const c18d =  0.00070557664296393412389774
-const c17d = -0.00251865614498713360352999
-const c16d =  0.00646262899036991172313504
-const c15d = -0.0128281333663399031014274
-const c14d =  0.0208024799924145797902497
-const c13d = -0.0289002344784740315686289
-const c12d =  0.0359785005035104590853656
-const c11d = -0.041848579703592507506027
-const c10d =  0.0470843011653283988193763
-const c9d  = -0.0524914210588448421068719
-const c8d  =  0.0587946590969581003860434
-const c7d  = -0.0666620884778795497194182
-const c6d  =  0.0769225330296203768654095
-const c5d  = -0.0909090442773387574781907
-const c4d  =  0.111111108376896236538123
-const c3d  = -0.142857142756268568062339
-const c2d  =  0.199999999997977351284817
-const c1d =  -0.333333333333317605173818
+let
+global atan2k_fast
+global atan2k
 
-const c9f = -0.00176397908944636583328247f0
-const c8f =  0.0107900900766253471374512f0
-const c7f = -0.0309564601629972457885742f0
-const c6f =  0.0577365085482597351074219f0
-const c5f = -0.0838950723409652709960938f0
-const c4f =  0.109463557600975036621094f0
-const c3f = -0.142626821994781494140625f0
-const c2f =  0.199983194470405578613281f0
-const c1f = -0.333332866430282592773438f0
+c20d =  1.06298484191448746607415e-05
+c19d = -0.000125620649967286867384336
+c18d =  0.00070557664296393412389774
+c17d = -0.00251865614498713360352999
+c16d =  0.00646262899036991172313504
+c15d = -0.0128281333663399031014274
+c14d =  0.0208024799924145797902497
+c13d = -0.0289002344784740315686289
+c12d =  0.0359785005035104590853656
+c11d = -0.041848579703592507506027
+c10d =  0.0470843011653283988193763
+c9d  = -0.0524914210588448421068719
+c8d  =  0.0587946590969581003860434
+c7d  = -0.0666620884778795497194182
+c6d  =  0.0769225330296203768654095
+c5d  = -0.0909090442773387574781907
+c4d  =  0.111111108376896236538123
+c3d  = -0.142857142756268568062339
+c2d  =  0.199999999997977351284817
+c1d =  -0.333333333333317605173818
 
-@inline atan2k_fast_kernel(x::FloatType64) = @horner x c1d c2d c3d c4d c5d c6d c7d c8d c9d c10d c11d c12d c13d c14d c15d c16d c17d c18d c19d c20d
-@inline atan2k_fast_kernel(x::FloatType32) = @horner x c1f c2f c3f c4f c5f c6f c7f c8f c9f
+c9f = -0.00176397908944636583328247f0
+c8f =  0.0107900900766253471374512f0
+c7f = -0.0309564601629972457885742f0
+c6f =  0.0577365085482597351074219f0
+c5f = -0.0838950723409652709960938f0
+c4f =  0.109463557600975036621094f0
+c3f = -0.142626821994781494140625f0
+c2f =  0.199983194470405578613281f0
+c1f = -0.333332866430282592773438f0
+
+global @inline atan2k_fast_kernel(x::FloatType64) = @horner x c1d c2d c3d c4d c5d c6d c7d c8d c9d c10d c11d c12d c13d c14d c15d c16d c17d c18d c19d c20d
+global @inline atan2k_fast_kernel(x::FloatType32) = @horner x c1f c2f c3f c4f c5f c6f c7f c8f c9f
 
 @inline function atan2k_fast(y::V, x::V) where {T<:Union{Float32,Float64},V<:Union{T,Vec{<:Any,T}}}
     xl0 = x < 0
@@ -140,13 +144,13 @@ const c1f = -0.333332866430282592773438f0
     s = y / x
     t = s * s
     u = atan2k_fast_kernel(t)
-    t = muladd(u, t * s, s)
-    muladd(q, T(PI_2), t)
+    t = u * t * s + s
+    q * T(PI_2) + t
 end
 
 
-@inline atan2k_kernel(x::Double{<:FloatType64}) = @horner x.hi c1d c2d c3d c4d c5d c6d c7d c8d c9d c10d c11d c12d c13d c14d c15d c16d c17d c18d c19d c20d
-@inline atan2k_kernel(x::Double{<:FloatType32}) = dadd(c1f, x.hi * (@horner x.hi c2f c3f c4f c5f c6f c7f c8f c9f))
+global @inline atan2k_kernel(x::Double{<:FloatType64}) = @horner x.hi c1d c2d c3d c4d c5d c6d c7d c8d c9d c10d c11d c12d c13d c14d c15d c16d c17d c18d c19d c20d
+global @inline atan2k_kernel(x::Double{<:FloatType32}) = dadd(c1f, x.hi * (@horner x.hi c2f c3f c4f c5f c6f c7f c8f c9f))
 
 @inline function atan2k(y::Double{V}, x::Double{V}) where {T,V<:Union{T,Vec{<:Any,T}}}
     xl0 = x < 0
@@ -173,6 +177,7 @@ end
     T <: Float64 && (t = vifelse(abs(s.hi) < 1e-200, s, t))
     t = dadd(dmul(convert(V,q), MDPI2(T)), t)
     return t
+end
 end
 
 

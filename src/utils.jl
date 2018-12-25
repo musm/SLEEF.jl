@@ -8,13 +8,8 @@ const FMA_FAST = is_fma_fast(Float64) && is_fma_fast(Float32)
 
 @inline isnegzero(x::T) where {T<:Union{Float32,Float64}} = x === T(-0.0)
 # Disabling the check for performance when vecterized.
-# My initial attempt at vectorizing the function failed.
+# A PR succesfully vectorizing the check is welcome.
 @inline isnegzero(x::Vec{N}) where N = Vec{N,Bool}(false)
-# @inline function isnegzero(x::Vec{N,T}) where {N,T<:Union{Float32,Float64}}
-#     Vec{N,Bool}(ntuple(Val(N)) do n
-#         x[n] === T(-0.0)
-#     end)
-# end
 
 @inline ispinf(x::T) where {T<:FloatType} = x == T(Inf)
 @inline isninf(x::T) where {T<:FloatType} = x == T(-Inf)

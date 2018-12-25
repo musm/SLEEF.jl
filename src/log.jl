@@ -196,8 +196,7 @@ function log_fast(d::FloatType)
 
     t = log_fast_kernel(x2)
 
-    x = muladd(x, t, T(MLN2) * e)
-
+    x = x * t + T(MLN2) * e
 
     x = vifelse(isinf(d), T(Inf), x)
     x = vifelse((d < 0) | isnan(d), T(NaN), x)

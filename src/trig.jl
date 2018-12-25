@@ -376,7 +376,7 @@ function sincos_fast(d::FloatType64)
 
     u = sincos_b_kernel(s)
 
-    ry = muladd(u, s, T(1.0))
+    ry = u * s + T(1.0)
 
     qli = unsafe_trunc(EquivalentInteger(T), ql)
     qli_odd = qli & 1 != 0
@@ -420,7 +420,7 @@ function sincos_fast(d::FloatType32)
 
     u = sincos_b_kernel(s)
 
-    ry = muladd(u, s, T(1.0))
+    ry = u * s + T(1.0)
 
     qi = unsafe_trunc(EquivalentInteger(T), q)
     qi_isodd = qi & 1 != 0
@@ -819,7 +819,7 @@ function atan_fast(x::T) where {T<:FloatType}
     t = x * x
     u = atan_fast_kernel(t)
     # t = x + x * t * u
-    t = muladd(x * t, u, x)
+    t = x * t * u + x
     t = vifelse(q & 1 != 0, T(PI_2) - t, t)
     t = vifelse(q & 2 != 0, -t, t)
     return t

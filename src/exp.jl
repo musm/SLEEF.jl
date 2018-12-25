@@ -184,7 +184,7 @@ function exp(d::FloatType)
     s = muladd(q, -L2L(T), s)
 
     u = exp_kernel(s)
-    u = muladd(s * s, u, s) + 1
+    u = s * s * u + s + 1
     u = ldexp2k(u, qi)
 
     u = vifelse(d > max_exp(T), T(Inf), u)
