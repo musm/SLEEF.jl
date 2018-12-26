@@ -55,7 +55,7 @@ function sin(d::V) where V <: FloatType64
     v = dmul(t, dadd(V(1.0), dmul(w, s)))
     u = V(v)
 
-    qli = unsafe_trunc(EquivalentInteger(T), ql)
+    qli = unsafe_trunc(fpinttype(T), ql)
     u = vifelse(qli & 1 != 0, -u, u)
     u = vifelse((!isinf(d)) & (isnegzero(d) | (abs(d) > TRIG_MAX(T))), T(-0.0), u)
 
@@ -80,7 +80,7 @@ function sin(d::V) where V <: FloatType32
     v = dmul(t, dadd(T(1.0), dmul(w, s)))
     u = V(v)
 
-    qi = unsafe_trunc(EquivalentInteger(T), q)
+    qi = unsafe_trunc(fpinttype(T), q)
     u = vifelse(qi & 1 != 0, -u, u)
     u = vifelse((!isinf(d)) & (isnegzero(d) | (abs(d) > TRIG_MAX(T))), T(-0.0), u)
 
@@ -111,7 +111,7 @@ function cos(d::V) where V <: FloatType64
 
     u = V(v)
 
-    qli = unsafe_trunc(EquivalentInteger(T), ql)
+    qli = unsafe_trunc(fpinttype(T), ql)
     u = vifelse(qli & 2 == 0, -u, u)
     u = vifelse(!isinf(d) & (d > TRIG_MAX(T)), T(0.0), u)
 
@@ -138,7 +138,7 @@ function cos(d::V) where V <: FloatType32
 
     u = V(v)
 
-    qi = unsafe_trunc(EquivalentInteger(T), q)
+    qi = unsafe_trunc(fpinttype(T), q)
     u = vifelse(qi & 2 == 0, -u, u)
     u = vifelse(!isinf(d) & (d > TRIG_MAX(T)), T(0.0), u)
 
@@ -204,7 +204,7 @@ function sin_fast(d::FloatType64)
 
     s = d * d
 
-    qli = unsafe_trunc(EquivalentInteger(T), ql)
+    qli = unsafe_trunc(fpinttype(T), ql)
     d = vifelse(qli & 1 != 0, -d, d)
 
     u = sincos_fast_kernel(s)
@@ -228,7 +228,7 @@ function sin_fast(d::FloatType32)
 
     s = d * d
 
-    qli = unsafe_trunc(EquivalentInteger(T), q)
+    qli = unsafe_trunc(fpinttype(T), q)
     d = vifelse(qli & 1 != 0, -d, d)
 
     u = sincos_fast_kernel(s)
@@ -257,7 +257,7 @@ function cos_fast(d::FloatType64)
 
     s = d * d
 
-    qli = unsafe_trunc(EquivalentInteger(T), ql)
+    qli = unsafe_trunc(fpinttype(T), ql)
     d = vifelse(qli & 2 == 0, -d, d)
 
     u = sincos_fast_kernel(s)
@@ -281,7 +281,7 @@ function cos_fast(d::FloatType32)
 
     s = d * d
 
-    qi = unsafe_trunc(EquivalentInteger(T), q)
+    qi = unsafe_trunc(fpinttype(T), q)
     d = vifelse(qi & 2 == 0, -d, d)
 
     u = sincos_fast_kernel(s)
@@ -378,7 +378,7 @@ function sincos_fast(d::FloatType64)
 
     ry = u * s + T(1.0)
 
-    qli = unsafe_trunc(EquivalentInteger(T), ql)
+    qli = unsafe_trunc(fpinttype(T), ql)
     qli_odd = qli & 1 != 0
     s = vifelse(qli_odd, ry, s)
     ry = vifelse(qli_odd, rx, ry)
@@ -422,7 +422,7 @@ function sincos_fast(d::FloatType32)
 
     ry = u * s + T(1.0)
 
-    qi = unsafe_trunc(EquivalentInteger(T), q)
+    qi = unsafe_trunc(fpinttype(T), q)
     qi_isodd = qi & 1 != 0
     s = vifelse(qi_isodd, ry, s)
     ry = vifelse(qi_isodd, rx, ry)
@@ -472,7 +472,7 @@ function sincos(d::V) where V <: FloatType64
     v  = dadd(T(1.0), dmul(sx, u))
     ry = V(v)
 
-    qli = unsafe_trunc(EquivalentInteger(T), ql)
+    qli = unsafe_trunc(fpinttype(T), ql)
     qli_odd = qli & 1 != 0
     u = vifelse(qli_odd, ry, u)
     ry = vifelse(qli_odd, rx, ry)
@@ -520,7 +520,7 @@ function sincos(d::V) where V <: FloatType32
     ry = V(v)
 
 
-    qli = unsafe_trunc(EquivalentInteger(T), q)
+    qli = unsafe_trunc(fpinttype(T), q)
     qli_odd = qli & 1 != 0
     u = vifelse(qli_odd, ry, u)
     ry = vifelse(qli_odd, rx, ry)
@@ -600,7 +600,7 @@ function tan_fast(d::FloatType64)
 
     s = x * x
 
-    qli = unsafe_trunc(EquivalentInteger(T), ql)
+    qli = unsafe_trunc(fpinttype(T), ql)
     qli_odd = qli & 1 != 0
     x = vifelse(qli_odd, -x, x)
 
@@ -631,7 +631,7 @@ function tan_fast(d::FloatType32)
 
     s = x * x
 
-    qli = unsafe_trunc(EquivalentInteger(T), q)
+    qli = unsafe_trunc(fpinttype(T), q)
     qli_odd = qli & 1 != 0
     x = vifelse(qli_odd, -x, x)
 
@@ -694,7 +694,7 @@ function tan(d::V) where V <: FloatType64
     s = dadd2(s, ql * (-PI_C(T) * T(0.5)            ))
     s = dadd2(s, (qh * (1 << 24) + ql) * (-PI_D(T) * T(0.5)))
 
-    qli = unsafe_trunc(EquivalentInteger(T), ql)
+    qli = unsafe_trunc(fpinttype(T), ql)
     qli_odd = qli & 1 != 0
     s = vifelse(qli_odd, -s, s)
 
@@ -728,7 +728,7 @@ function tan(d::V) where V <: FloatType32
     s = dadd2(s, q * -PI_XD(T) * T(0.5))
     s = dadd2(s, q * -PI_XE(T) * T(0.5))
 
-    qli = unsafe_trunc(EquivalentInteger(T), q)
+    qli = unsafe_trunc(fpinttype(T), q)
     qli_odd = qli & 1 != 0
     s = vifelse(qli_odd, -s, s)
 
@@ -807,7 +807,7 @@ end
 Compute the inverse tangent of `x`, where the output is in radians.
 """
 function atan_fast(x::T) where {T<:FloatType}
-    TI = EquivalentInteger(T)
+    TI = fpinttype(T)
 
     q = vifelse(signbit(x), TI(2), TI(0))
     x = abs(x)

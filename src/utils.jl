@@ -9,7 +9,7 @@ const FMA_FAST = is_fma_fast(Float64) && is_fma_fast(Float32)
 @inline isnegzero(x::T) where {T<:Union{Float32,Float64}} = x === T(-0.0)
 # Disabling the check for performance when vecterized.
 # A PR succesfully vectorizing the check is welcome.
-@inline isnegzero(x::Vec{N}) where N = Vec{N,Bool}(false)
+@inline isnegzero(x::Vec{N}) where {N} = Vec{N,Bool}(false)
 
 @inline ispinf(x::T) where {T<:FloatType} = x == T(Inf)
 @inline isninf(x::T) where {T<:FloatType} = x == T(-Inf)
@@ -20,12 +20,12 @@ const FMA_FAST = is_fma_fast(Float64) && is_fma_fast(Float32)
 @inline integer2float(::Type{Float64}, m::Int) = reinterpret(Float64, (m % Int64) << significand_bits(Float64))
 @inline integer2float(::Type{Float32}, m::Int) = reinterpret(Float32, (m % Int32) << significand_bits(Float32))
 
-@inline function integer2float(::Type{<:Union{Vec{N,Float64},Float64}}, m::Vec{N,Int}) where N
+@inline function integer2float(::Type{<:Union{Vec{N,Float64},Float64}}, m::Vec{N,Int}) where {N}
     reinterpret(Vec{N,Float64}, Vec{N,Int64}(ntuple(Val(N)) do n
         Core.VecElement(m[n] % Int64)
     end) << significand_bits(Float64))
 end
-@inline function integer2float(::Type{<:Union{Vec{N,Float32},Float32}}, m::Vec{N,Int32}) where N
+@inline function integer2float(::Type{<:Union{Vec{N,Float32},Float32}}, m::Vec{N,<:Integer}) where {N}
     reinterpret(Vec{N,Float32}, Vec{N,Int32}(ntuple(Val(N)) do n
         Core.VecElement(m[n] % Int32)
     end) << Int32(significand_bits(Float32)))
@@ -34,12 +34,12 @@ end
 @inline float2integer(d::Float64) = (reinterpret(Int64, d) >> significand_bits(Float64)) % Int
 @inline float2integer(d::Float32) = (reinterpret(Int32, d) >> significand_bits(Float32)) % Int
 
-@inline function float2integer(d::Vec{N,Float64}) where N
+@inline function float2integer(d::Vec{N,Float64}) where {N}
     Vec{N,Int64}(ntuple(Val(N)) do n
         Core.VecElement((reinterpret(Int64, d[n]) >> significand_bits(Float64)) % Int)
     end)
 end
-@inline function float2integer(d::Vec{N,Float32}) where N
+@inline function float2integer(d::Vec{N,Float32}) where {N}
     Vec{N,Int32}(ntuple(Val(N)) do n
         Core.VecElement((reinterpret(Int32, d[n]) >> Int32(significand_bits(Float32))) % Int32)
     end)

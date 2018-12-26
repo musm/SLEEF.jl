@@ -26,7 +26,7 @@ const min_exp2(::Type{Float32}) = -150f0
     c3  = 0.5550410866482046596e-1
     c2  = 0.2402265069591012214
     c1  = 0.6931471805599452862
-    @horner x c1 c2 c3 c4 c5 c6 c7 c8 c9 c10 c11
+    return @horner x c1 c2 c3 c4 c5 c6 c7 c8 c9 c10 c11
 end
 
 @inline function exp2_kernel(x::FloatType32)
@@ -36,7 +36,7 @@ end
     c3 = 0.5550347269f-1
     c2 = 0.2402264476f0
     c1 = 0.6931471825f0
-    @horner x c1 c2 c3 c4 c5 c6
+    return @horner x c1 c2 c3 c4 c5 c6
 end
 
 """
@@ -44,10 +44,10 @@ end
 
 Compute the base-`2` exponential of `x`, that is `2ˣ`.
 """
-function exp2(d::V) where V <: FloatType
+function exp2(d::V) where {V <: FloatType}
     T = eltype(d)
     q = round(d)
-    qi = unsafe_trunc(EquivalentInteger(T), q)
+    qi = unsafe_trunc(fpinttype(T), q)
 
     s = d - q
 
@@ -58,7 +58,8 @@ function exp2(d::V) where V <: FloatType
 
     u = vifelse(d > max_exp2(T), T(Inf), u)
     u = vifelse(d < min_exp2(T), T(0.0), u)
-    u
+
+    return u
 end
 
 
@@ -98,10 +99,10 @@ end
 
 Compute the base-`10` exponential of `x`, that is `10ˣ`.
 """
-function exp10(d::V) where V <: FloatType
+function exp10(d::V) where {V <: FloatType}
     T = eltype(d)
     q = round(T(MLOG10_2) * d)
-    qi = unsafe_trunc(EquivalentInteger(T), q)
+    qi = unsafe_trunc(fpinttype(T), q)
 
     s = muladd(q, -L10U(T), d)
     s = muladd(q, -L10L(T), s)
@@ -114,7 +115,7 @@ function exp10(d::V) where V <: FloatType
     u = vifelse(d > max_exp10(T), T(Inf), u)
     u = vifelse(d < min_exp10(T), T(0.0), u)
 
-    u
+    return u
 end
 
 
@@ -157,7 +158,7 @@ const min_exp(::Type{<:FloatType32}) = -103.97208f0               # ≈ log 2^-1
     c3  = 0.0416666666666665047591422
     c2  = 0.166666666666666851703837
     c1  = 0.50
-    @horner x c1 c2 c3 c4 c5 c6 c7 c8 c9 c10 c11
+    return @horner x c1 c2 c3 c4 c5 c6 c7 c8 c9 c10 c11
 end
 
 @inline function exp_kernel(x::FloatType32)
@@ -167,7 +168,7 @@ end
     c3 = 0.0416664853692054748535156f0
     c2 = 0.166666671633720397949219f0
     c1 = 0.5f0
-    @horner x c1 c2 c3 c4 c5 c6
+    return @horner x c1 c2 c3 c4 c5 c6
 end
 
 """
@@ -178,7 +179,7 @@ Compute the base-`e` exponential of `x`, that is `eˣ`.
 function exp(d::FloatType)
     T = eltype(d)
     q = round(T(MLN2E) * d)
-    qi = unsafe_trunc(EquivalentInteger(T), q)
+    qi = unsafe_trunc(fpinttype(T), q)
 
     s = muladd(q, -L2U(T), d)
     s = muladd(q, -L2L(T), s)
@@ -190,5 +191,5 @@ function exp(d::FloatType)
     u = vifelse(d > max_exp(T), T(Inf), u)
     u = vifelse(d < min_exp(T), T(0), u)
 
-    u
+    return u
 end

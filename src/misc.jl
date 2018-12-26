@@ -6,7 +6,7 @@ Exponentiation operator, returns `x` raised to the power `y`.
 """
 function pow(x::V, y::V) where {V <: FloatType}
     T = eltype(x)
-    yi = unsafe_trunc(EquivalentInteger(T), y)
+    yi = unsafe_trunc(fpinttype(T), y)
     yisint = yi == y
     yisodd = isodd(yi) & yisint
 
@@ -53,7 +53,7 @@ end
 
 Return `x^{1/3}`.
 """
-function cbrt_fast(d::V) where V <: FloatType
+function cbrt_fast(d::V) where {V <: FloatType}
     T  = eltype(d)
     e  = ilogbk(abs(d)) + 1
     d  = ldexp2k(d, -e)
@@ -77,7 +77,7 @@ end
 
 Return `x^{1/3}`. The prefix operator `∛` is equivalent to `cbrt`.
 """
-function cbrt(d::V) where V <: FloatType
+function cbrt(d::V) where {V <: FloatType}
     T  = eltype(d)
     e  = ilogbk(abs(d)) + 1
     d  = ldexp2k(d, -e)

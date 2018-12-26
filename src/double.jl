@@ -14,10 +14,10 @@ Double(x::T) where {T<:vIEEEFloat} = Double(x, zero(T))
 @inline trunclo(x::Float64) = reinterpret(Float64, reinterpret(UInt64, x) & 0xffff_ffff_f800_0000) # clear lower 27 bits (leave upper 26 bits)
 @inline trunclo(x::Float32) = reinterpret(Float32, reinterpret(UInt32, x) & 0xffff_f000) # clear lowest 12 bits (leave upper 12 bits)
 
-@inline function trunclo(x::Vec{N,Float64}) where N
+@inline function trunclo(x::Vec{N,Float64}) where {N}
     reinterpret(Vec{N,Float64}, reinterpret(Vec{N,UInt64}, x) & 0xffff_ffff_f800_0000) # clear lower 27 bits (leave upper 26 bits)
 end
-@inline function trunclo(x::Vec{N,Float32}) where N
+@inline function trunclo(x::Vec{N,Float32}) where {N}
     reinterpret(Vec{N,Float32}, reinterpret(Vec{N,UInt32}, x) & 0xffff_f000) # clear lowest 12 bits (leave upper 12 bits)
 end
 

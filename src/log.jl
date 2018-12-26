@@ -34,7 +34,7 @@ end
 
 Returns the base `10` logarithm of `x`.
 """
-function log10(a::V) where V <: FloatType
+function log10(a::V) where {V <: FloatType}
     T = eltype(a)
     x = V(dmul(logk(a), MDLN10E(T)))
 
@@ -52,7 +52,7 @@ end
 
 Returns the base `2` logarithm of `x`.
 """
-function log2(a::V) where V <: FloatType
+function log2(a::V) where {V <: FloatType}
     T = eltype(a)
     u = V(dmul(logk(a), MDLN2E(T)))
 

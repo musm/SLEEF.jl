@@ -89,7 +89,7 @@ end
 # similar to ilogbk, but argument has to be a normalized float value
 @inline function ilogb2k(d::FloatType)
     T = eltype(d)
-    I = EquivalentInteger(T)
+    I = fpinttype(T)
     (float2integer(d) & I(exponent_raw_max(T))) - I(exponent_bias(T))
 end
 
@@ -155,7 +155,7 @@ global @inline atan2k_kernel(x::Double{<:FloatType32}) = dadd(c1f, x.hi * (@horn
 @inline function atan2k(y::Double{V}, x::Double{V}) where {T,V<:Union{T,Vec{<:Any,T}}}
     xl0 = x < 0
     if V <: Vec
-        q = vifelse(xl0, Vec{length(x.hi),EquivalentInteger(T)}(-2), 0)
+        q = vifelse(xl0, Vec{length(x.hi),fpinttype(T)}(-2), 0)
     else
         q = vifelse(xl0, -2, 0)
     end
@@ -210,7 +210,7 @@ end
 
 @inline function expk(d::Double{V}) where {T<:Union{Float32,Float64},V<:Union{T,Vec{<:Any,T}}}
     q = round(V(d) * V(MLN2E))
-    qi = unsafe_trunc(EquivalentInteger(T), q)
+    qi = unsafe_trunc(fpinttype(T), q)
 
     s = dadd(d, -q * L2U(T))
     s = dadd(s, -q * L2L(T))
@@ -257,7 +257,7 @@ end
 
 @inline function expk2(d::Double{V}) where {T<:Union{Float32,Float64},V<:Union{T,Vec{<:Any,T}}}
     q = round(V(d) * T(MLN2E))
-    qi = unsafe_trunc(EquivalentInteger(T), q)
+    qi = unsafe_trunc(fpinttype(T), q)
 
     s = dadd(d, -q * L2U(T))
     s = dadd(s, -q * L2L(T))
