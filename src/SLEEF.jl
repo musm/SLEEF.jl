@@ -1,7 +1,9 @@
 module SLEEF
 
-# export sin, cos, tan, asin, acos, atan, sincos, sinh, cosh, tanh,
-#     asinh, acosh, atanh, log, log2, log10, log1p, ilogb, exp, exp2, exp10, expm1, ldexp, cbrt, pow
+# export ldexp, sqrt, cbrt, pow,
+#    log, log2, log10, log1p, ilogb, exp, exp2, exp10, expm1, 
+#     sin, cos, tan, asin, acos, atan, sincos,
+#     sinh, cosh, tanh, asinh, acosh, atanh
 
 # fast variants (within 3 ulp)
 # export sin_fast, cos_fast, tan_fast, sincos_fast, asin_fast, acos_fast, atan_fast, atan2_fast, log_fast, cbrt_fast
